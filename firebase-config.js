@@ -1,10 +1,10 @@
-// Paste your Firebase project config here (from Firebase Console → Project Settings → Your apps)
 const firebaseConfig = {
-  apiKey: "PASTE_YOUR_API_KEY",
-  authDomain: "PASTE_YOUR_AUTH_DOMAIN",
-  projectId: "PASTE_YOUR_PROJECT_ID",
-  storageBucket: "PASTE_YOUR_STORAGE_BUCKET",
-  messagingSenderId: "PASTE_YOUR_MESSAGING_SENDER_ID",
-  appId: "PASTE_YOUR_APP_ID"
+  apiKey: "AIzaSyBTk1sK_1Yd44oI237VF2gAQggwqwlldms",
+  authDomain: "mattheustein-03.firebaseapp.com",
+  projectId: "mattheustein-03",
+  storageBucket: "mattheustein-03.firebasestorage.app",
+  messagingSenderId: "1027709330385",
+  appId: "1:1027709330385:web:cbb255f6bee6ef3419b6f0",
+  measurementId: "G-QH9R8Z80CT"
 };
 firebase.initializeApp(firebaseConfig);
