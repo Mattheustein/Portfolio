@@ -1,5 +1,12 @@
 {
   "projects": {
     "default": "mattheustein-03"
+  },
+  "targets": {
+    "mattheustein-03": {
+      "hosting": {
+        "mattheustein": ["mattheustein"]
+      }
+    }
   }
 }
