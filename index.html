@@ -151,7 +151,43 @@
     footer a{color:inherit;text-decoration:none}
     .rev{opacity:0;transform:translateY(18px);transition:opacity .8s,transform .8s}
     .rev.vis{opacity:1;transform:none}
-    @media(max-width:768px){nav{padding:12px 18px}.nl{display:none}.w{padding:80px 20px 60px}#hero{padding:90px 20px 60px}.about-grid,.sg,.cg2{grid-template-columns:1fr;gap:24px}footer{padding:14px 20px;flex-direction:column;gap:6px;text-align:center}}
+    #menu-btn{display:none;flex-direction:column;gap:5px;background:none;border:none;cursor:pointer;padding:4px;z-index:110}
+    #menu-btn span{display:block;width:22px;height:2px;background:var(--c1);transition:all .25s}
+    #menu-btn.open span:nth-child(1){transform:translateY(7px) rotate(45deg)}
+    #menu-btn.open span:nth-child(2){opacity:0}
+    #menu-btn.open span:nth-child(3){transform:translateY(-7px) rotate(-45deg)}
+    @media(max-width:768px){
+      nav{padding:12px 18px;flex-wrap:wrap;position:relative}
+      #menu-btn{display:flex}
+      .nl{display:none;width:100%;flex-direction:column;gap:0;list-style:none;border-top:1px solid var(--border);margin-top:10px;padding-top:4px}
+      .nl.open{display:flex}
+      .nl li a{display:block;padding:11px 4px;font-size:.72rem;letter-spacing:.16em;border-bottom:1px solid rgba(0,212,255,.06)}
+      .w{padding:72px 18px 56px}
+      #hero{padding:100px 18px 60px;min-height:100svh}
+      .h-name{font-size:clamp(2.4rem,13vw,4rem)}
+      .h-pre{font-size:.68rem}
+      .h-roles{font-size:.78rem}
+      .h-bio{font-size:.84rem;max-width:100%}
+      .h-cta{flex-direction:column;gap:10px}
+      .h-cta .btn{text-align:center}
+      .about-grid{grid-template-columns:1fr;gap:28px}
+      .av{width:100%;max-width:280px;margin:0 auto}
+      .srow{grid-template-columns:repeat(auto-fit,minmax(90px,1fr));gap:8px}
+      .sg{grid-template-columns:1fr;gap:28px}
+      .tl{padding-left:20px}
+      .tl::before{left:2px}
+      .dot{left:-24px;width:8px;height:8px}
+      .cg{grid-template-columns:1fr}
+      .cg2{grid-template-columns:1fr;gap:28px}
+      .el .ec{grid-template-columns:1fr;gap:4px}
+      .ey2{text-align:left}
+      footer{padding:14px 18px;flex-direction:column;gap:6px;text-align:center}
+      .st{font-size:clamp(1.3rem,5vw,1.8rem);margin-bottom:28px}
+    }
+    @media(max-width:400px){
+      .h-name{font-size:2.2rem}
+      .srow{grid-template-columns:1fr 1fr}
+    }
   </style>
 </head>
 <body>
@@ -166,13 +202,16 @@
     <svg class="l-shield" viewBox="0 0 20 22" fill="none" stroke="var(--c1)" stroke-width="1.4"><path d="M10 1L2 4.5v6.5c0 5.2 3.5 9.7 8 11 4.5-1.3 8-5.8 8-11V4.5z"/><polyline points="6.5 11.5 9 14 14 8.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
     <span class="l-txt">MATTHEUSTEIN<span class="l-blink"></span></span>
   </a>
-  <ul class="nl">
+  <ul class="nl" id="nav-links">
     <li><a href="#about">About</a></li>
     <li><a href="#skills">Skills</a></li>
     <li><a href="#experience">Experience</a></li>
     <li><a href="#certs">Credentials</a></li>
     <li><a href="#contact">Contact</a></li>
   </ul>
+  <button id="menu-btn" aria-label="Toggle menu">
+    <span></span><span></span><span></span>
+  </button>
 </nav>
 
 <main>
@@ -370,6 +409,11 @@ function openTerm(){termEl.classList.add('open');tout.innerHTML='';tp('╔══
 function tp(txt,cls){const d=document.createElement('div');if(cls==='c')d.style.color='var(--c1)';else if(cls==='o')d.style.color='var(--dim)';else if(cls==='e')d.style.color='#ff5555';d.textContent=txt;tout.appendChild(d);tout.parentElement.scrollTop=99999}
 const CMD={help:()=>{tp('──────────────────────────────────────────','o');[['whoami','Identity & status'],['skills','Skill matrix'],['certs','Certifications'],['experience','Work history'],['education','Academic background'],['contact','Contact info'],['hack','...'],['clear','Clear terminal'],['exit','Close']].forEach(([k,v])=>tp(`  ${k.padEnd(14)} ${v}`,'o'))},whoami:()=>{tp('> Mahmoud Sultan — alias: mattheustein','c');tp('  Role     : Business Support Specialist | Cyber Engineer','o');tp('  Location : New Cairo, Cairo, Egypt','o');tp('  LinkedIn : linkedin.com/in/mattheustein','o');tp('  Status   : Seeking cybersecurity opportunities','o')},skills:()=>{tp('── Skill Matrix ───────────────────────────','c');[['Cybersecurity','████████████████░░░░  80%'],['Network Security','██████████████░░░░░░  75%'],['Cloud (GCP)','██████████████░░░░░░  72%'],['Risk Management','████████████████░░░░  78%'],['Software Testing','██████████████░░░░░░  75%'],['Technical Support','███████████████████░  92%'],['Process Improvement','████████████████████  88%']].forEach(([k,v])=>tp(`  ${k.padEnd(22)} ${v}`,'o'))},certs:()=>{tp('── Certifications ─────────────────────────','c');['Google Cloud Essentials','Build & Secure Networks in GCP','Cyber Security Essentials','Vodafone Learning Silver Badge FY25/26','Commercial Acumen Program'].forEach(c=>tp('  ✓ '+c,'o'))},experience:()=>{tp('── Operations Log ─────────────────────────','c');[['2024–Now ','Business Support Specialist @ Vodafone Business UK'],['2025–Now ','Software Testing Trainee @ DEPI (Egypt)'],['2025     ','Business Development @ iSky Tech (UAE)'],['2023–24  ','HBB Xperts Technician @ Vodafone UK'],['2023     ','Student Guide @ Udacity (DECI)']].forEach(([d,r])=>tp(`  ${d}  ${r}`,'o'))},education:()=>{tp('── Education ──────────────────────────────','c');[['The Open University','BSc Computer Science (2023–2026)'],['Arab Open University','BSc Computer Science (2023–2026)'],['Zagazig University','BSc CS & Chemistry (2021–2023)']].forEach(([s,d])=>tp(`  ${s} — ${d}`,'o'))},contact:()=>{tp('── Secure Channel ─────────────────────────','c');tp('  email   : swe.mahmoud.sultan@gmail.com','o');tp('  linkedin: linkedin.com/in/mattheustein','o');tp('  phone   : +20 114 408 6778','o');tp('  location: New Cairo, Cairo, Egypt','o')},hack:()=>{tp('Initiating unauthorized access...','c');[['Scanning 192.168.1.0/24...','c'],['Found open ports: 22, 80, 443, 8080','o'],['[████████████████░░░░] 80% — cracking...','c'],['ERROR: 2FA blocked. Access denied.','e'],['Tip: Stay ethical. Stay legal. 🛡️','c']].forEach(([m,c],i)=>setTimeout(()=>tp(m,c),i*680))},clear:()=>{tout.innerHTML=''},exit:()=>{termEl.classList.remove('open')}};
 tin.addEventListener('keydown',e=>{if(e.key!=='Enter')return;const cmd=tin.value.trim().toLowerCase();if(cmd){tp('mattheustein@sec:~$ '+cmd,'c');(CMD[cmd]?CMD[cmd]():tp('command not found: '+cmd+' (try "help")','e'))}tin.value=''});
+
+// ── MOBILE NAV ──
+const menuBtn=document.getElementById('menu-btn'),navLinks=document.getElementById('nav-links');
+menuBtn.addEventListener('click',()=>{menuBtn.classList.toggle('open');navLinks.classList.toggle('open')});
+navLinks.querySelectorAll('a').forEach(a=>a.addEventListener('click',()=>{menuBtn.classList.remove('open');navLinks.classList.remove('open')}));
 
 // ═══ FIREBASE DATA LOADER ═══
 function mkSkillBars(items){return items.map(s=>`<div class="sk"><div class="sk-h"><span>${s.name}</span><span>${s.pct}%</span></div><div class="sk-t"><div class="sk-f" data-p="${s.pct}"></div></div></div>`).join('')}
