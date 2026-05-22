@@ -329,18 +329,6 @@
   </div>
 </div>
 
-<div id="twk">
-  <div class="twh">// Tweaks</div>
-  <span class="twl">Particle Density</span>
-  <input type="range" class="twr" id="dens" min="20" max="110" value="60">
-  <div class="twt"><span>Matrix Rain</span><label class="sw"><input type="checkbox" id="tog-m" checked><span class="sli"></span></label></div>
-  <div class="twt"><span>Scanlines</span><label class="sw"><input type="checkbox" id="tog-s" checked><span class="sli"></span></label></div>
-  <div class="twt"><span>Glitch Effect</span><label class="sw"><input type="checkbox" id="tog-g" checked><span class="sli"></span></label></div>
-  <div style="margin-top:14px;padding-top:10px;border-top:1px solid var(--border)">
-    <button onclick="document.getElementById('twk').classList.remove('open');document.getElementById('twk-btn').style.display=''" style="font-family:'Share Tech Mono',monospace;font-size:.55rem;letter-spacing:.1em;color:var(--dim);background:none;border:none;cursor:pointer;text-transform:uppercase">Close Tweaks</button>
-  </div>
-</div>
-<button id="twk-btn" onclick="document.getElementById('twk').classList.add('open');this.style.display='none'">// Tweaks</button>
 
 <script>
 const cvm=document.getElementById('cv-m'),ctxm=cvm.getContext('2d');
@@ -352,7 +340,7 @@ const CHARS='アウオカキクサシスタテトナ01101001ABCDEF<>{}[]|\\/*#@!
 function drawMatrix(){if(!showM)return;ctxm.fillStyle='rgba(2,8,20,.058)';ctxm.fillRect(0,0,W,H);const c=getComputedStyle(document.documentElement).getPropertyValue('--c1').trim()||'#00d4ff';ctxm.fillStyle=c;ctxm.font='12px "Share Tech Mono",monospace';ctxm.globalAlpha=0.88;for(let i=0;i<drops.length;i++){ctxm.fillText(CHARS[Math.floor(Math.random()*CHARS.length)],i*14,drops[i]*14);if(drops[i]*14>H&&Math.random()>.974)drops[i]=0;drops[i]+=.55}ctxm.globalAlpha=1}
 let particles=[];
 function mkP(){return{x:Math.random()*W,y:Math.random()*H,vx:(Math.random()-.5)*.38,vy:(Math.random()-.5)*.38,r:Math.random()*1.3+.4,a:Math.random()*.45+.2}}
-function syncP(){const n=parseInt(document.getElementById('dens').value)||60;while(particles.length<n)particles.push(mkP());particles=particles.slice(0,n)}
+function syncP(){const n=60;while(particles.length<n)particles.push(mkP());particles=particles.slice(0,n)}
 syncP();
 function drawP(){ctxp.clearRect(0,0,W,H);const c=getComputedStyle(document.documentElement).getPropertyValue('--c1').trim()||'#00d4ff';for(let i=0;i<particles.length;i++){const p=particles[i];p.x+=p.vx;p.y+=p.vy;if(p.x<0||p.x>W)p.vx*=-1;if(p.y<0||p.y>H)p.vy*=-1;ctxp.beginPath();ctxp.arc(p.x,p.y,p.r,0,Math.PI*2);ctxp.fillStyle=c;ctxp.globalAlpha=p.a*.55;ctxp.fill();for(let j=i+1;j<particles.length;j++){const q=particles[j];const dx=p.x-q.x,dy=p.y-q.y,d=Math.sqrt(dx*dx+dy*dy);if(d<150){ctxp.beginPath();ctxp.moveTo(p.x,p.y);ctxp.lineTo(q.x,q.y);ctxp.strokeStyle=c;ctxp.lineWidth=.5;ctxp.globalAlpha=(1-d/150)*.15;ctxp.stroke()}}}ctxp.font='10px "Share Tech Mono",monospace';ctxp.fillStyle=c;const t=Date.now()*.0001;for(let h=0;h<10;h++){ctxp.globalAlpha=.045+Math.sin(t+h)*.015;const hx=(Math.sin(t*.6+h*1.9)*.44+.5)*W,hy=(Math.cos(t*.4+h*2.5)*.44+.5)*H;ctxp.fillText('0x'+((h*0x1A3F+Math.floor(t*10))&0xFFFF).toString(16).toUpperCase().padStart(4,'0'),hx,hy)}ctxp.globalAlpha=1}
 (function loop(){requestAnimationFrame(loop);drawMatrix();drawP()})();
@@ -379,11 +367,6 @@ function openTerm(){termEl.classList.add('open');tout.innerHTML='';tp('╔══
 function tp(txt,cls){const d=document.createElement('div');if(cls==='c')d.style.color='var(--c1)';else if(cls==='o')d.style.color='var(--dim)';else if(cls==='e')d.style.color='#ff5555';d.textContent=txt;tout.appendChild(d);tout.parentElement.scrollTop=99999}
 const CMD={help:()=>{tp('──────────────────────────────────────────','o');[['whoami','Identity & status'],['skills','Skill matrix'],['certs','Certifications'],['experience','Work history'],['education','Academic background'],['contact','Contact info'],['hack','...'],['clear','Clear terminal'],['exit','Close']].forEach(([k,v])=>tp(`  ${k.padEnd(14)} ${v}`,'o'))},whoami:()=>{tp('> Mahmoud Sultan — alias: mattheustein','c');tp('  Role     : Business Support Specialist | Cyber Engineer','o');tp('  Location : New Cairo, Cairo, Egypt','o');tp('  LinkedIn : linkedin.com/in/mattheustein','o');tp('  Status   : Seeking cybersecurity opportunities','o')},skills:()=>{tp('── Skill Matrix ───────────────────────────','c');[['Cybersecurity','████████████████░░░░  80%'],['Network Security','██████████████░░░░░░  75%'],['Cloud (GCP)','██████████████░░░░░░  72%'],['Risk Management','████████████████░░░░  78%'],['Software Testing','██████████████░░░░░░  75%'],['Technical Support','███████████████████░  92%'],['Process Improvement','████████████████████  88%']].forEach(([k,v])=>tp(`  ${k.padEnd(22)} ${v}`,'o'))},certs:()=>{tp('── Certifications ─────────────────────────','c');['Google Cloud Essentials','Build & Secure Networks in GCP','Cyber Security Essentials','Vodafone Learning Silver Badge FY25/26','Commercial Acumen Program'].forEach(c=>tp('  ✓ '+c,'o'))},experience:()=>{tp('── Operations Log ─────────────────────────','c');[['2024–Now ','Business Support Specialist @ Vodafone Business UK'],['2025–Now ','Software Testing Trainee @ DEPI (Egypt)'],['2025     ','Business Development @ iSky Tech (UAE)'],['2023–24  ','HBB Xperts Technician @ Vodafone UK'],['2023     ','Student Guide @ Udacity (DECI)']].forEach(([d,r])=>tp(`  ${d}  ${r}`,'o'))},education:()=>{tp('── Education ──────────────────────────────','c');[['The Open University','BSc Computer Science (2023–2026)'],['Arab Open University','BSc Computer Science (2023–2026)'],['Zagazig University','BSc CS & Chemistry (2021–2023)']].forEach(([s,d])=>tp(`  ${s} — ${d}`,'o'))},contact:()=>{tp('── Secure Channel ─────────────────────────','c');tp('  email   : swe.mahmoud.sultan@gmail.com','o');tp('  linkedin: linkedin.com/in/mattheustein','o');tp('  phone   : +20 114 408 6778','o');tp('  location: New Cairo, Cairo, Egypt','o')},hack:()=>{tp('Initiating unauthorized access...','c');[['Scanning 192.168.1.0/24...','c'],['Found open ports: 22, 80, 443, 8080','o'],['[████████████████░░░░] 80% — cracking...','c'],['ERROR: 2FA blocked. Access denied.','e'],['Tip: Stay ethical. Stay legal. 🛡️','c']].forEach(([m,c],i)=>setTimeout(()=>tp(m,c),i*680))},clear:()=>{tout.innerHTML=''},exit:()=>{termEl.classList.remove('open')}};
 tin.addEventListener('keydown',e=>{if(e.key!=='Enter')return;const cmd=tin.value.trim().toLowerCase();if(cmd){tp('mattheustein@sec:~$ '+cmd,'c');(CMD[cmd]?CMD[cmd]():tp('command not found: '+cmd+' (try "help")','e'))}tin.value=''});
-
-document.getElementById('dens').addEventListener('input',syncP);
-document.getElementById('tog-m').addEventListener('change',e=>{showM=e.target.checked;if(!showM)ctxm.clearRect(0,0,W,H)});
-document.getElementById('tog-s').addEventListener('change',e=>{document.getElementById('scanlines').style.opacity=e.target.checked?'1':'0'});
-document.getElementById('tog-g').addEventListener('change',e=>{document.querySelector('.h-name').classList.toggle('nog',!e.target.checked)});
 
 // ═══ FIREBASE DATA LOADER ═══
 function mkSkillBars(items){return items.map(s=>`<div class="sk"><div class="sk-h"><span>${s.name}</span><span>${s.pct}%</span></div><div class="sk-t"><div class="sk-f" data-p="${s.pct}"></div></div></div>`).join('')}

@@ -166,7 +166,10 @@
     <button class="tab-btn" data-tab="contact">Contact</button>
     <button class="tab-btn" data-tab="theme">Theme</button>
     <button class="tab-btn" data-tab="account">Account</button>
-    <!-- NEW SECTIONS: add tab buttons here -->
+    <button class="tab-btn" id="add-section-btn" title="Add a new section to your portfolio">+ Section</button>
+  </div>
+  <div id="add-section-msg" style="display:none;font-family:'Share Tech Mono',monospace;font-size:.62rem;color:var(--c1);padding:10px 32px;border-bottom:1px solid var(--border);background:rgba(0,212,255,.04)">
+    // To add a new section (e.g. Projects, Testimonials): add a tab button + tab pane + render/collect functions following the same pattern as existing sections. Each section needs an entry in DEFAULTS, populateForms(), and collectData().
   </div>
 
   <div class="editor-body">
@@ -244,7 +247,7 @@
       <div class="field-group"><label class="field-label">GitHub URL</label><input type="url" class="field" id="ct-github"></div>
     </div>
 
-    <!-- NEW SECTIONS: add tab-pane blocks here, id="tab-{name}" -->
+    <!-- NEW SECTIONS: add tab-pane blocks here, id="tab-{name}" — see "+ Section" button above for the pattern -->
 
     <!-- THEME -->
     <div class="tab-pane" id="tab-theme">
@@ -353,6 +356,12 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
 });
 
 // ── DEFAULTS ──
+// ── ADD SECTION ──
+document.getElementById('add-section-btn').addEventListener('click', () => {
+  const msg = document.getElementById('add-section-msg');
+  msg.style.display = msg.style.display === 'none' ? 'block' : 'none';
+});
+
 // ── THEME SWATCHES ──
 let activeThemePreset = '';
 document.querySelectorAll('.theme-swatch').forEach(btn => {
