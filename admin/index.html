@@ -132,11 +132,10 @@
 
     <div class="creds-hint">
       <p>
-        <strong>// Default credentials (change after first login)</strong><br>
+        <strong>// Login credentials</strong><br>
         Email &nbsp;&nbsp;: <strong>swe.mahmoud.sultan@gmail.com</strong><br>
         Password: <strong>Mattheustein@2026!</strong><br><br>
-        Create this user in Firebase Console →<br>
-        Authentication → Users → Add user
+        Change your password from the Account tab after login.
       </p>
     </div>
   </div>
@@ -163,6 +162,7 @@
     <button class="tab-btn" data-tab="experience">Experience</button>
     <button class="tab-btn" data-tab="creds">Credentials</button>
     <button class="tab-btn" data-tab="contact">Contact</button>
+    <button class="tab-btn" data-tab="account">Account</button>
   </div>
 
   <div class="editor-body">
@@ -238,6 +238,18 @@
       </div>
       <div class="field-group"><label class="field-label">LinkedIn URL</label><input type="url" class="field" id="ct-linkedin"></div>
       <div class="field-group"><label class="field-label">GitHub URL</label><input type="url" class="field" id="ct-github"></div>
+    </div>
+
+    <!-- ACCOUNT -->
+    <div class="tab-pane" id="tab-account">
+      <div class="field-group"><label class="field-label">Change Password</label>
+        <span class="field-hint">You will be asked to confirm your current password first.</span>
+      </div>
+      <div class="field-group"><label class="field-label">Current Password</label><input type="password" class="field" id="pw-current" placeholder="••••••••" autocomplete="current-password"></div>
+      <div class="field-group"><label class="field-label">New Password</label><input type="password" class="field" id="pw-new" placeholder="Min 8 characters" autocomplete="new-password"></div>
+      <div class="field-group"><label class="field-label">Confirm New Password</label><input type="password" class="field" id="pw-confirm" placeholder="Repeat new password" autocomplete="new-password"></div>
+      <button class="abtn" id="pw-btn" style="margin-top:8px">Update Password</button>
+      <div id="pw-status" style="font-family:'Share Tech Mono',monospace;font-size:.62rem;margin-top:12px;min-height:18px"></div>
     </div>
 
   </div>
@@ -521,6 +533,35 @@ function collectData() {
     contact:{ blurb:document.getElementById('ct-blurb').value.trim(), email:document.getElementById('ct-email').value.trim(), phone:document.getElementById('ct-phone').value.trim(), linkedin:document.getElementById('ct-linkedin').value.trim(), github:document.getElementById('ct-github').value.trim() }
   };
 }
+
+// ── CHANGE PASSWORD ──
+document.getElementById('pw-btn').addEventListener('click', async () => {
+  const current = document.getElementById('pw-current').value;
+  const next = document.getElementById('pw-new').value;
+  const confirm = document.getElementById('pw-confirm').value;
+  const status = document.getElementById('pw-status');
+  status.style.color = 'var(--dim)'; status.textContent = '';
+
+  if (!current || !next || !confirm) { status.style.color='#ff5555'; status.textContent='// All fields required.'; return; }
+  if (next.length < 8) { status.style.color='#ff5555'; status.textContent='// Password must be at least 8 characters.'; return; }
+  if (next !== confirm) { status.style.color='#ff5555'; status.textContent='// Passwords do not match.'; return; }
+
+  const btn = document.getElementById('pw-btn');
+  btn.disabled = true; btn.textContent = 'Updating...';
+  try {
+    const user = auth.currentUser;
+    const cred = firebase.auth.EmailAuthProvider.credential(user.email, current);
+    await user.reauthenticateWithCredential(cred);
+    await user.updatePassword(next);
+    status.style.color='#00ff88'; status.textContent='// Password updated successfully.';
+    document.getElementById('pw-current').value = '';
+    document.getElementById('pw-new').value = '';
+    document.getElementById('pw-confirm').value = '';
+  } catch(e) {
+    status.style.color='#ff5555';
+    status.textContent = e.code === 'auth/wrong-password' ? '// Current password is incorrect.' : '// Error: ' + e.message;
+  } finally { btn.disabled=false; btn.textContent='Update Password'; }
+});
 
 document.getElementById('save-btn').addEventListener('click', async () => {
   const btn=document.getElementById('save-btn'), status=document.getElementById('save-status');
