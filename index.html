@@ -5,298 +5,153 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>MATTHEUSTEIN — Mahmoud Sultan</title>
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=Share+Tech+Mono&family=Space+Grotesk:wght@300;400;500&display=swap" rel="stylesheet">
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  <script src="firebase-config.js"></script>
   <style>
     *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
-
-    :root{
-      --bg:#020814;--bg2:#040d1a;
-      --c1:#00d4ff;--c2:#7b2fff;
-      --text:#b8d8f0;--dim:rgba(184,216,240,.45);
-      --border:rgba(0,212,255,.16);
-      --glow:0 0 20px rgba(0,212,255,.3),0 0 60px rgba(0,212,255,.07);
-    }
+    :root{--bg:#020814;--bg2:#040d1a;--c1:#00d4ff;--c2:#7b2fff;--text:#b8d8f0;--dim:rgba(184,216,240,.45);--border:rgba(0,212,255,.16);--glow:0 0 20px rgba(0,212,255,.3),0 0 60px rgba(0,212,255,.07)}
     body.t-green{--c1:#00ff9f;--c2:#00aa60}
-    body.t-pink {--c1:#ff3cac;--c2:#8b3fc9}
-    body.t-red  {--c1:#ff3300;--c2:#ff7700}
-
+    body.t-pink{--c1:#ff3cac;--c2:#8b3fc9}
+    body.t-red{--c1:#ff3300;--c2:#ff7700}
     html{scroll-behavior:smooth}
     body{background:var(--bg);color:var(--text);font-family:'Space Grotesk',sans-serif;overflow-x:hidden;cursor:crosshair}
-
-    /* ── Canvas layers ── */
     #cv-m,#cv-p{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;display:block}
     #cv-m{z-index:1;opacity:.22}
     #cv-p{z-index:2}
-    #scanlines{position:fixed;inset:0;z-index:999;pointer-events:none;transition:opacity .3s;
-      background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,.07) 2px,rgba(0,0,0,.07) 4px)}
-    #scan-beam{position:fixed;left:0;right:0;height:2px;z-index:4;pointer-events:none;
-      background:linear-gradient(90deg,transparent 5%,var(--c1) 50%,transparent 95%);
-      box-shadow:0 0 15px var(--c1),0 0 30px rgba(0,212,255,.3);
-      animation:sb 7s linear infinite}
+    #scanlines{position:fixed;inset:0;z-index:999;pointer-events:none;transition:opacity .3s;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,.07) 2px,rgba(0,0,0,.07) 4px)}
+    #scan-beam{position:fixed;left:0;right:0;height:2px;z-index:4;pointer-events:none;background:linear-gradient(90deg,transparent 5%,var(--c1) 50%,transparent 95%);box-shadow:0 0 15px var(--c1),0 0 30px rgba(0,212,255,.3);animation:sb 7s linear infinite}
     @keyframes sb{0%{top:-2px;opacity:0}3%{opacity:.45}97%{opacity:.45}100%{top:100vh;opacity:0}}
     .hud{position:absolute;width:36px;height:36px;pointer-events:none;z-index:5;opacity:.5}
     .hud-tl{top:100px;left:24px;border-top:2px solid var(--c1);border-left:2px solid var(--c1)}
     .hud-tr{top:100px;right:24px;border-top:2px solid var(--c1);border-right:2px solid var(--c1)}
     .hud-bl{bottom:24px;left:24px;border-bottom:2px solid var(--c2);border-left:2px solid var(--c2)}
     .hud-br{bottom:24px;right:24px;border-bottom:2px solid var(--c2);border-right:2px solid var(--c2)}
-
-    /* ── Nav ── */
-    nav{position:fixed;top:0;left:0;right:0;z-index:100;
-      display:flex;align-items:center;justify-content:space-between;
-      padding:14px 56px;backdrop-filter:blur(16px);
-      background:rgba(2,8,20,.65);border-bottom:1px solid var(--border)}
+    nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:14px 56px;backdrop-filter:blur(16px);background:rgba(2,8,20,.65);border-bottom:1px solid var(--border)}
     .logo{display:flex;align-items:center;gap:10px;text-decoration:none}
     .l-shield{width:20px;height:22px;filter:drop-shadow(0 0 4px var(--c1));animation:shp 3s ease-in-out infinite;flex-shrink:0}
     @keyframes shp{0%,100%{filter:drop-shadow(0 0 4px var(--c1))}50%{filter:drop-shadow(0 0 16px var(--c1))}}
     .l-txt{font-family:'Orbitron',monospace;font-weight:900;font-size:.82rem;letter-spacing:.2em;color:var(--c1);text-shadow:var(--glow)}
     .l-blink{display:inline-block;width:7px;height:13px;background:var(--c1);margin-left:4px;vertical-align:middle;animation:blink .9s step-end infinite;opacity:.6}
     .nl{display:flex;gap:28px;list-style:none}
-    .nl a{font-family:'Share Tech Mono',monospace;font-size:.67rem;letter-spacing:.18em;
-      text-transform:uppercase;color:var(--dim);text-decoration:none;transition:color .2s}
+    .nl a{font-family:'Share Tech Mono',monospace;font-size:.67rem;letter-spacing:.18em;text-transform:uppercase;color:var(--dim);text-decoration:none;transition:color .2s}
     .nl a:hover,.nl a.on{color:var(--c1);text-shadow:0 0 8px var(--c1)}
-
     main,footer{position:relative;z-index:10}
-
-    /* ── Section wrap ── */
     .w{max-width:1140px;margin:0 auto;padding:100px 56px 80px}
-    .ey{font-family:'Share Tech Mono',monospace;font-size:.62rem;letter-spacing:.35em;
-      color:var(--c1);text-transform:uppercase;opacity:.7;margin-bottom:6px}
-    .st{font-family:'Orbitron',monospace;font-size:clamp(1.5rem,2.8vw,2.2rem);font-weight:700;
-      margin-bottom:44px;
-      background:linear-gradient(120deg,var(--c1) 25%,var(--c2));
-      -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
-
-    /* ── HERO ── */
-    #hero{min-height:100vh;display:flex;flex-direction:column;justify-content:center;
-      padding:80px 56px;padding-top:130px;position:relative;overflow:hidden}
-    #hero::before{content:'';position:absolute;inset:0;pointer-events:none;
-      background-image:linear-gradient(rgba(0,212,255,.04) 1px,transparent 1px),
-                       linear-gradient(90deg,rgba(0,212,255,.04) 1px,transparent 1px);
-      background-size:64px 64px;animation:gs 28s linear infinite}
+    .ey{font-family:'Share Tech Mono',monospace;font-size:.62rem;letter-spacing:.35em;color:var(--c1);text-transform:uppercase;opacity:.7;margin-bottom:6px}
+    .st{font-family:'Orbitron',monospace;font-size:clamp(1.5rem,2.8vw,2.2rem);font-weight:700;margin-bottom:44px;background:linear-gradient(120deg,var(--c1) 25%,var(--c2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+    #hero{min-height:100vh;display:flex;flex-direction:column;justify-content:center;padding:80px 56px;padding-top:130px;position:relative;overflow:hidden}
+    #hero::before{content:'';position:absolute;inset:0;pointer-events:none;background-image:linear-gradient(rgba(0,212,255,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(0,212,255,.04) 1px,transparent 1px);background-size:64px 64px;animation:gs 28s linear infinite}
     @keyframes gs{to{background-position:64px 64px}}
-
-    .h-pre{font-family:'Share Tech Mono',monospace;font-size:.78rem;letter-spacing:.3em;
-      color:var(--c1);margin-bottom:14px;opacity:0;animation:fin .6s .15s forwards}
-    .h-name{font-family:'Orbitron',monospace;font-weight:900;
-      font-size:clamp(3.2rem,9.5vw,7.5rem);line-height:1;letter-spacing:-.01em;
-      color:#fff;display:inline-block;position:relative;
-      text-shadow:0 0 60px rgba(0,212,255,.25),0 0 120px rgba(0,212,255,.1);
-      opacity:0;animation:fin .6s .45s forwards}
-    .h-name::before,.h-name::after{content:attr(data-text);position:absolute;inset:0;
-      font-family:inherit;font-weight:inherit;font-size:inherit;line-height:inherit;letter-spacing:inherit}
+    .h-pre{font-family:'Share Tech Mono',monospace;font-size:.78rem;letter-spacing:.3em;color:var(--c1);margin-bottom:14px;opacity:0;animation:fin .6s .15s forwards}
+    .h-name{font-family:'Orbitron',monospace;font-weight:900;font-size:clamp(3.2rem,9.5vw,7.5rem);line-height:1;letter-spacing:-.01em;color:#fff;display:inline-block;position:relative;text-shadow:0 0 60px rgba(0,212,255,.25),0 0 120px rgba(0,212,255,.1);opacity:0;animation:fin .6s .45s forwards}
+    .h-name::before,.h-name::after{content:attr(data-text);position:absolute;inset:0;font-family:inherit;font-weight:inherit;font-size:inherit;line-height:inherit;letter-spacing:inherit}
     .h-name::before{color:var(--c1);animation:ga 4s 1.5s infinite}
-    .h-name::after {color:var(--c2);animation:gb 4s 1.8s infinite}
+    .h-name::after{color:var(--c2);animation:gb 4s 1.8s infinite}
     .h-name.nog::before,.h-name.nog::after{animation:none;opacity:0}
-
-    @keyframes ga{
-      0%,80%,100%{clip-path:none;transform:none;opacity:0}
-      82%{clip-path:polygon(0 8%,100% 8%,100% 30%,0 30%);transform:translate(-6px,0);opacity:.9}
-      84%{clip-path:polygon(0 55%,100% 55%,100% 78%,0 78%);transform:translate(6px,0);opacity:.9}
-      86%{clip-path:polygon(0 35%,100% 35%,100% 50%,0 50%);transform:translate(-3px,1px);opacity:.6}
-      88%{clip-path:none;transform:translate(2px,-1px);opacity:.3}
-      89%{opacity:0}
-    }
-    @keyframes gb{
-      0%,83%,100%{clip-path:none;transform:none;opacity:0}
-      84%{clip-path:polygon(0 42%,100% 42%,100% 64%,0 64%);transform:translate(7px,-1px);opacity:.8}
-      86%{clip-path:polygon(0 15%,100% 15%,100% 33%,0 33%);transform:translate(-5px,0);opacity:.8}
-      88%{clip-path:polygon(0 70%,100% 70%,100% 85%,0 85%);transform:translate(3px,1px);opacity:.4}
-      89%{opacity:0}
-    }
-
-    .h-roles{font-family:'Share Tech Mono',monospace;font-size:clamp(.78rem,1.3vw,.98rem);
-      color:var(--c1);margin-top:14px;height:1.5em;opacity:0;animation:fin .6s .85s forwards}
-    .caret{display:inline-block;width:2px;height:.88em;background:var(--c1);
-      vertical-align:middle;margin-left:2px;animation:blink .9s step-end infinite}
+    @keyframes ga{0%,80%,100%{clip-path:none;transform:none;opacity:0}82%{clip-path:polygon(0 8%,100% 8%,100% 30%,0 30%);transform:translate(-6px,0);opacity:.9}84%{clip-path:polygon(0 55%,100% 55%,100% 78%,0 78%);transform:translate(6px,0);opacity:.9}86%{clip-path:polygon(0 35%,100% 35%,100% 50%,0 50%);transform:translate(-3px,1px);opacity:.6}88%{clip-path:none;transform:translate(2px,-1px);opacity:.3}89%{opacity:0}}
+    @keyframes gb{0%,83%,100%{clip-path:none;transform:none;opacity:0}84%{clip-path:polygon(0 42%,100% 42%,100% 64%,0 64%);transform:translate(7px,-1px);opacity:.8}86%{clip-path:polygon(0 15%,100% 15%,100% 33%,0 33%);transform:translate(-5px,0);opacity:.8}88%{clip-path:polygon(0 70%,100% 70%,100% 85%,0 85%);transform:translate(3px,1px);opacity:.4}89%{opacity:0}}
+    .h-roles{font-family:'Share Tech Mono',monospace;font-size:clamp(.78rem,1.3vw,.98rem);color:var(--c1);margin-top:14px;height:1.5em;opacity:0;animation:fin .6s .85s forwards}
+    .caret{display:inline-block;width:2px;height:.88em;background:var(--c1);vertical-align:middle;margin-left:2px;animation:blink .9s step-end infinite}
     @keyframes blink{50%{opacity:0}}
-
-    .h-bio{max-width:500px;font-size:.88rem;color:var(--dim);line-height:1.88;
-      margin-top:20px;opacity:0;animation:fin .6s 1.15s forwards}
-    .h-cta{display:flex;gap:12px;margin-top:32px;flex-wrap:wrap;
-      opacity:0;animation:fin .6s 1.45s forwards}
-
-    .btn{display:inline-block;font-family:'Share Tech Mono',monospace;
-      font-size:.68rem;letter-spacing:.18em;text-transform:uppercase;
-      padding:11px 24px;border:1px solid var(--c1);color:var(--c1);
-      text-decoration:none;position:relative;overflow:hidden;
-      transition:color .22s;cursor:pointer;background:transparent}
-    .btn::after{content:'';position:absolute;inset:0;background:var(--c1);
-      transform:scaleX(0);transform-origin:left;
-      transition:transform .22s cubic-bezier(.4,0,.2,1);z-index:-1}
+    .h-bio{max-width:500px;font-size:.88rem;color:var(--dim);line-height:1.88;margin-top:20px;opacity:0;animation:fin .6s 1.15s forwards}
+    .h-cta{display:flex;gap:12px;margin-top:32px;flex-wrap:wrap;opacity:0;animation:fin .6s 1.45s forwards}
+    .btn{display:inline-block;font-family:'Share Tech Mono',monospace;font-size:.68rem;letter-spacing:.18em;text-transform:uppercase;padding:11px 24px;border:1px solid var(--c1);color:var(--c1);text-decoration:none;position:relative;overflow:hidden;transition:color .22s;cursor:pointer;background:transparent}
+    .btn::after{content:'';position:absolute;inset:0;background:var(--c1);transform:scaleX(0);transform-origin:left;transition:transform .22s cubic-bezier(.4,0,.2,1);z-index:-1}
     .btn:hover::after{transform:scaleX(1)}
     .btn:hover{color:#020814}
     .btn-alt{border-color:var(--c2);color:var(--c2)}
     .btn-alt::after{background:var(--c2)}
-
-    .h-status{display:flex;align-items:center;gap:8px;margin-top:44px;
-      font-family:'Share Tech Mono',monospace;font-size:.62rem;letter-spacing:.2em;
-      color:#00ff88;opacity:0;animation:fin .6s 1.75s forwards}
-    .dpulse{width:6px;height:6px;border-radius:50%;background:#00ff88;
-      box-shadow:0 0 8px #00ff88;animation:dp 2s ease-in-out infinite}
+    .h-status{display:flex;align-items:center;gap:8px;margin-top:44px;font-family:'Share Tech Mono',monospace;font-size:.62rem;letter-spacing:.2em;color:#00ff88;opacity:0;animation:fin .6s 1.75s forwards}
+    .dpulse{width:6px;height:6px;border-radius:50%;background:#00ff88;box-shadow:0 0 8px #00ff88;animation:dp 2s ease-in-out infinite}
     @keyframes dp{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(.7);opacity:.4}}
     @keyframes fin{to{opacity:1}}
-
-    /* ── ABOUT ── */
     .about-grid{display:grid;grid-template-columns:240px 1fr;gap:52px;align-items:start}
     .av{width:240px;aspect-ratio:1;border:1px solid var(--border);position:relative;overflow:hidden}
-    .av::before{content:'';position:absolute;top:-1px;left:-1px;width:20px;height:20px;
-      border-top:2px solid var(--c1);border-left:2px solid var(--c1);z-index:2}
-    .av::after{content:'';position:absolute;bottom:-1px;right:-1px;width:20px;height:20px;
-      border-bottom:2px solid var(--c2);border-right:2px solid var(--c2);z-index:2}
-    .av img{width:100%;height:100%;object-fit:cover;display:block;
-      filter:contrast(1.1) brightness(.88);transition:filter .3s}
+    .av::before{content:'';position:absolute;top:-1px;left:-1px;width:20px;height:20px;border-top:2px solid var(--c1);border-left:2px solid var(--c1);z-index:2}
+    .av::after{content:'';position:absolute;bottom:-1px;right:-1px;width:20px;height:20px;border-bottom:2px solid var(--c2);border-right:2px solid var(--c2);z-index:2}
+    .av img{width:100%;height:100%;object-fit:cover;display:block;filter:contrast(1.1) brightness(.88);transition:filter .3s}
     .av:hover img{filter:contrast(1.15) brightness(.95) saturate(1.1)}
     .at p{font-size:.87rem;color:var(--dim);line-height:1.85;margin-bottom:13px}
     .at strong{color:var(--c1);font-weight:500}
     .srow{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:22px}
     .st2{border:1px solid var(--border);padding:12px;text-align:center}
     .sn{font-family:'Orbitron',monospace;font-size:1.5rem;font-weight:700;color:var(--c1);display:block}
-    .sl2{font-family:'Share Tech Mono',monospace;font-size:.57rem;letter-spacing:.1em;
-      color:var(--dim);text-transform:uppercase;margin-top:3px;display:block}
-
-    /* ── SKILLS ── */
+    .sl2{font-family:'Share Tech Mono',monospace;font-size:.57rem;letter-spacing:.1em;color:var(--dim);text-transform:uppercase;margin-top:3px;display:block}
     .sg{display:grid;grid-template-columns:1fr 1fr;gap:36px 52px}
-    .ct{font-family:'Share Tech Mono',monospace;font-size:.63rem;letter-spacing:.22em;
-      color:var(--c2);text-transform:uppercase;margin-bottom:16px;
-      padding-bottom:7px;border-bottom:1px solid var(--border)}
+    .ct{font-family:'Share Tech Mono',monospace;font-size:.63rem;letter-spacing:.22em;color:var(--c2);text-transform:uppercase;margin-bottom:16px;padding-bottom:7px;border-bottom:1px solid var(--border)}
     .sk{margin-bottom:12px}
-    .sk-h{display:flex;justify-content:space-between;font-family:'Share Tech Mono',monospace;
-      font-size:.69rem;color:var(--text);margin-bottom:5px}
+    .sk-h{display:flex;justify-content:space-between;font-family:'Share Tech Mono',monospace;font-size:.69rem;color:var(--text);margin-bottom:5px}
     .sk-t{height:2px;background:rgba(0,212,255,.08)}
-    .sk-f{height:100%;background:linear-gradient(90deg,var(--c1),var(--c2));
-      width:0;transition:width 1.4s cubic-bezier(.16,1,.3,1);box-shadow:0 0 5px var(--c1)}
+    .sk-f{height:100%;background:linear-gradient(90deg,var(--c1),var(--c2));width:0;transition:width 1.4s cubic-bezier(.16,1,.3,1);box-shadow:0 0 5px var(--c1)}
     .tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
-    .tag{font-family:'Share Tech Mono',monospace;font-size:.59rem;letter-spacing:.07em;
-      padding:3px 10px;border:1px solid var(--border);color:var(--dim);
-      transition:all .18s;cursor:default}
+    .tag{font-family:'Share Tech Mono',monospace;font-size:.59rem;letter-spacing:.07em;padding:3px 10px;border:1px solid var(--border);color:var(--dim);transition:all .18s;cursor:default}
     .tag:hover{border-color:var(--c1);color:var(--c1)}
-
-    /* ── EXPERIENCE ── */
     .tl{position:relative;padding-left:26px}
-    .tl::before{content:'';position:absolute;left:0;top:8px;bottom:44px;width:1px;
-      background:linear-gradient(to bottom,var(--c1),var(--c2),transparent)}
+    .tl::before{content:'';position:absolute;left:0;top:8px;bottom:44px;width:1px;background:linear-gradient(to bottom,var(--c1),var(--c2),transparent)}
     .ti{position:relative;padding-bottom:38px}
-    .dot{position:absolute;left:-32px;top:6px;width:10px;height:10px;
-      background:var(--bg);border:2px solid var(--c1);transform:rotate(45deg)}
+    .dot{position:absolute;left:-32px;top:6px;width:10px;height:10px;background:var(--bg);border:2px solid var(--c1);transform:rotate(45deg)}
     .dot.now::after{content:'';position:absolute;inset:1px;background:var(--c1)}
-    .td{font-family:'Share Tech Mono',monospace;font-size:.6rem;letter-spacing:.2em;
-      color:var(--c1);opacity:.65;margin-bottom:4px}
+    .td{font-family:'Share Tech Mono',monospace;font-size:.6rem;letter-spacing:.2em;color:var(--c1);opacity:.65;margin-bottom:4px}
     .tr{font-family:'Orbitron',monospace;font-size:.88rem;font-weight:600;color:#fff;margin-bottom:3px}
-    .tc2{font-family:'Share Tech Mono',monospace;font-size:.68rem;color:var(--c2);
-      letter-spacing:.08em;margin-bottom:9px}
+    .tc2{font-family:'Share Tech Mono',monospace;font-size:.68rem;color:var(--c2);letter-spacing:.08em;margin-bottom:9px}
     .tdesc{font-size:.82rem;color:var(--dim);line-height:1.75;max-width:560px}
-
-    /* ── CERTS ── */
     .cg{display:grid;grid-template-columns:repeat(auto-fill,minmax(206px,1fr));gap:14px}
-    .cc{border:1px solid var(--border);padding:18px;position:relative;
-      transition:border-color .3s,transform .3s}
+    .cc{border:1px solid var(--border);padding:18px;position:relative;transition:border-color .3s,transform .3s}
     .cc:hover{border-color:var(--c1);transform:translateY(-3px)}
-    .cc::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;
-      background:linear-gradient(90deg,transparent,var(--c1),transparent);
-      opacity:0;transition:opacity .3s}
+    .cc::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--c1),transparent);opacity:0;transition:opacity .3s}
     .cc:hover::before{opacity:1}
-    .ci{font-family:'Orbitron',monospace;font-size:1.2rem;color:var(--c1);
-      margin-bottom:9px;opacity:.55}
-    .cn{font-family:'Share Tech Mono',monospace;font-size:.7rem;
-      letter-spacing:.04em;color:var(--text);line-height:1.55}
-    .co{font-family:'Share Tech Mono',monospace;font-size:.58rem;
-      letter-spacing:.08em;color:var(--dim);margin-top:6px}
-
-    /* ── EDUCATION ── */
+    .ci{font-family:'Orbitron',monospace;font-size:1.2rem;color:var(--c1);margin-bottom:9px;opacity:.55}
+    .cn{font-family:'Share Tech Mono',monospace;font-size:.7rem;letter-spacing:.04em;color:var(--text);line-height:1.55}
+    .co{font-family:'Share Tech Mono',monospace;font-size:.58rem;letter-spacing:.08em;color:var(--dim);margin-top:6px}
     .el{display:flex;flex-direction:column;gap:12px;margin-top:0}
-    .ec{border:1px solid var(--border);padding:16px 20px;
-      display:grid;grid-template-columns:1fr auto;gap:8px;
-      align-items:center;transition:border-color .3s}
+    .ec{border:1px solid var(--border);padding:16px 20px;display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;transition:border-color .3s}
     .ec:hover{border-color:var(--c2)}
     .ed{font-family:'Orbitron',monospace;font-size:.82rem;font-weight:600;color:#fff;margin-bottom:3px}
     .es{font-family:'Share Tech Mono',monospace;font-size:.68rem;color:var(--c2);letter-spacing:.08em}
-    .ey2{font-family:'Share Tech Mono',monospace;font-size:.58rem;
-      letter-spacing:.12em;color:var(--dim);text-align:right;white-space:nowrap}
-
-    /* ── CONTACT ── */
+    .ey2{font-family:'Share Tech Mono',monospace;font-size:.58rem;letter-spacing:.12em;color:var(--dim);text-align:right;white-space:nowrap}
     .cg2{display:grid;grid-template-columns:1fr 1fr;gap:56px;align-items:start}
     .ct2 p{font-size:.87rem;color:var(--dim);line-height:1.88;margin-bottom:24px}
     .sl3{display:flex;flex-direction:column;gap:10px}
-    .soc{display:flex;align-items:center;gap:13px;
-      font-family:'Share Tech Mono',monospace;font-size:.7rem;letter-spacing:.08em;
-      color:var(--dim);text-decoration:none;padding:11px 14px;
-      border:1px solid var(--border);transition:all .2s}
+    .soc{display:flex;align-items:center;gap:13px;font-family:'Share Tech Mono',monospace;font-size:.7rem;letter-spacing:.08em;color:var(--dim);text-decoration:none;padding:11px 14px;border:1px solid var(--border);transition:all .2s}
     .soc:hover{border-color:var(--c1);color:var(--c1)}
     .soc svg{width:14px;height:14px;flex-shrink:0;opacity:.55}
-
-    /* ── TERMINAL ── */
-    #term{position:fixed;inset:0;z-index:500;display:none;
-      align-items:center;justify-content:center;
-      background:rgba(2,8,20,.9);backdrop-filter:blur(4px)}
+    #term{position:fixed;inset:0;z-index:500;display:none;align-items:center;justify-content:center;background:rgba(2,8,20,.9);backdrop-filter:blur(4px)}
     #term.open{display:flex}
     .tw{width:660px;max-width:92vw;border:1px solid var(--c1);box-shadow:var(--glow);overflow:hidden}
-    .tbar{background:rgba(0,212,255,.07);padding:8px 14px;display:flex;
-      align-items:center;gap:6px;border-bottom:1px solid var(--border)}
+    .tbar{background:rgba(0,212,255,.07);padding:8px 14px;display:flex;align-items:center;gap:6px;border-bottom:1px solid var(--border)}
     .td2{width:8px;height:8px;border-radius:50%;flex-shrink:0}
     .td-r{background:#ff5f57}.td-y{background:#febc2e}.td-g{background:#28c840}
-    .ttl{font-family:'Share Tech Mono',monospace;font-size:.63rem;
-      color:var(--dim);letter-spacing:.08em;margin-left:auto;margin-right:8px}
+    .ttl{font-family:'Share Tech Mono',monospace;font-size:.63rem;color:var(--dim);letter-spacing:.08em;margin-left:auto;margin-right:8px}
     .tcx{background:none;border:none;color:var(--dim);cursor:pointer;font-size:.8rem;padding:0}
-    .tbody2{background:rgba(2,8,20,.97);padding:18px 16px;
-      font-family:'Share Tech Mono',monospace;font-size:.77rem;color:var(--c1);
-      line-height:1.7;min-height:280px;max-height:56vh;overflow-y:auto}
+    .tbody2{background:rgba(2,8,20,.97);padding:18px 16px;font-family:'Share Tech Mono',monospace;font-size:.77rem;color:var(--c1);line-height:1.7;min-height:280px;max-height:56vh;overflow-y:auto}
     .trow{display:flex;gap:6px;align-items:center;margin-top:3px}
     .tps{color:var(--c2)}
-    #tin{background:none;border:none;outline:none;color:var(--c1);
-      font-family:'Share Tech Mono',monospace;font-size:.77rem;flex:1;caret-color:var(--c1)}
-
-    /* ── TWEAKS ── */
-    #twk{position:fixed;bottom:24px;right:24px;z-index:300;width:208px;
-      border:1px solid var(--border);background:rgba(2,8,20,.96);
-      backdrop-filter:blur(12px);padding:14px;display:none;box-shadow:var(--glow)}
+    #tin{background:none;border:none;outline:none;color:var(--c1);font-family:'Share Tech Mono',monospace;font-size:.77rem;flex:1;caret-color:var(--c1)}
+    #twk{position:fixed;bottom:24px;right:24px;z-index:300;width:208px;border:1px solid var(--border);background:rgba(2,8,20,.96);backdrop-filter:blur(12px);padding:14px;display:none;box-shadow:var(--glow)}
     #twk.open{display:block}
-    .twh{font-family:'Share Tech Mono',monospace;font-size:.62rem;letter-spacing:.25em;
-      color:var(--c1);text-transform:uppercase;margin-bottom:12px;
-      padding-bottom:8px;border-bottom:1px solid var(--border)}
-    .twl{font-family:'Share Tech Mono',monospace;font-size:.57rem;letter-spacing:.14em;
-      color:var(--dim);text-transform:uppercase;display:block;margin-bottom:7px;margin-top:12px}
+    .twh{font-family:'Share Tech Mono',monospace;font-size:.62rem;letter-spacing:.25em;color:var(--c1);text-transform:uppercase;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--border)}
+    .twl{font-family:'Share Tech Mono',monospace;font-size:.57rem;letter-spacing:.14em;color:var(--dim);text-transform:uppercase;display:block;margin-bottom:7px;margin-top:12px}
     .twcols{display:flex;gap:8px}
-    .tcc{width:20px;height:20px;border-radius:50%;cursor:pointer;
-      border:2px solid transparent;transition:border-color .2s;flex-shrink:0}
+    .tcc{width:20px;height:20px;border-radius:50%;cursor:pointer;border:2px solid transparent;transition:border-color .2s;flex-shrink:0}
     .tcc.on{border-color:#fff}
     .twr{width:100%;accent-color:var(--c1);display:block;margin-top:3px}
     .twt{display:flex;align-items:center;justify-content:space-between;margin-top:9px}
-    .twt span{font-family:'Share Tech Mono',monospace;font-size:.57rem;
-      letter-spacing:.08em;color:var(--dim)}
+    .twt span{font-family:'Share Tech Mono',monospace;font-size:.57rem;letter-spacing:.08em;color:var(--dim)}
     .sw{position:relative;width:28px;height:14px}
     .sw input{opacity:0;width:0;height:0}
-    .sli{position:absolute;inset:0;background:rgba(0,212,255,.1);
-      border:1px solid var(--border);cursor:pointer;transition:background .2s}
-    .sli::after{content:'';position:absolute;left:1px;top:1px;width:10px;height:10px;
-      background:var(--dim);transition:transform .2s,background .2s}
+    .sli{position:absolute;inset:0;background:rgba(0,212,255,.1);border:1px solid var(--border);cursor:pointer;transition:background .2s}
+    .sli::after{content:'';position:absolute;left:1px;top:1px;width:10px;height:10px;background:var(--dim);transition:transform .2s,background .2s}
     input:checked+.sli{background:rgba(0,212,255,.25)}
     input:checked+.sli::after{transform:translateX(14px);background:var(--c1)}
-
-    /* ── TWEAKS TOGGLE BTN ── */
-    #twk-btn{position:fixed;bottom:24px;right:24px;z-index:301;
-      font-family:'Share Tech Mono',monospace;font-size:.58rem;letter-spacing:.15em;
-      color:var(--c1);background:rgba(2,8,20,.9);border:1px solid var(--border);
-      padding:7px 12px;cursor:pointer;text-transform:uppercase;
-      transition:border-color .2s;backdrop-filter:blur(8px)}
+    #twk-btn{position:fixed;bottom:24px;right:24px;z-index:301;font-family:'Share Tech Mono',monospace;font-size:.58rem;letter-spacing:.15em;color:var(--c1);background:rgba(2,8,20,.9);border:1px solid var(--border);padding:7px 12px;cursor:pointer;text-transform:uppercase;transition:border-color .2s;backdrop-filter:blur(8px)}
     #twk-btn:hover{border-color:var(--c1)}
-    #twk.open~#twk-btn,#twk.open+#twk-btn{display:none}
-
-    /* ── FOOTER ── */
-    footer{border-top:1px solid var(--border);padding:18px 56px;
-      display:flex;justify-content:space-between;align-items:center}
-    footer span{font-family:'Share Tech Mono',monospace;font-size:.6rem;
-      letter-spacing:.14em;color:var(--dim)}
-
-    /* ── REVEAL ── */
+    footer{border-top:1px solid var(--border);padding:18px 56px;display:flex;justify-content:space-between;align-items:center}
+    footer span{font-family:'Share Tech Mono',monospace;font-size:.6rem;letter-spacing:.14em;color:var(--dim)}
+    footer a{color:inherit;text-decoration:none}
     .rev{opacity:0;transform:translateY(18px);transition:opacity .8s,transform .8s}
     .rev.vis{opacity:1;transform:none}
-
-    @media(max-width:768px){
-      nav{padding:12px 18px}.nl{display:none}
-      .w{padding:80px 20px 60px}
-      #hero{padding:90px 20px 60px}
-      .about-grid,.sg,.cg2{grid-template-columns:1fr;gap:24px}
-      footer{padding:14px 20px;flex-direction:column;gap:6px;text-align:center}
-    }
+    @media(max-width:768px){nav{padding:12px 18px}.nl{display:none}.w{padding:80px 20px 60px}#hero{padding:90px 20px 60px}.about-grid,.sg,.cg2{grid-template-columns:1fr;gap:24px}footer{padding:14px 20px;flex-direction:column;gap:6px;text-align:center}}
   </style>
 </head>
 <body>
@@ -322,241 +177,131 @@
 
 <main>
 
-<!-- ════════ HERO ════════ -->
 <section id="hero">
-  <div class="hud hud-tl"></div>
-  <div class="hud hud-tr"></div>
-  <div class="hud hud-bl"></div>
-  <div class="hud hud-br"></div>
-  <p class="h-pre">// identity.init() — mahmoud sultan</p>
-  <h1 class="h-name" data-text="MATTHEUSTEIN">MATTHEUSTEIN</h1>
+  <div class="hud hud-tl"></div><div class="hud hud-tr"></div><div class="hud hud-bl"></div><div class="hud hud-br"></div>
+  <p class="h-pre" id="h-pre">// identity.init() — mahmoud sultan</p>
+  <h1 class="h-name" id="h-name" data-text="MATTHEUSTEIN">MATTHEUSTEIN</h1>
   <div class="h-roles"><span id="rtxt"></span><span class="caret"></span></div>
-  <p class="h-bio">Dedicated professional at the intersection of cybersecurity, cloud infrastructure, and business operations. Building expertise in network security and threat management — leveraging 3+ years of technical experience at Vodafone UK.</p>
+  <p class="h-bio" id="h-bio">Dedicated professional at the intersection of cybersecurity, cloud infrastructure, and business operations. Building expertise in network security and threat management — leveraging 3+ years of technical experience at Vodafone UK.</p>
   <div class="h-cta">
     <a href="#experience" class="btn">View Experience</a>
     <a href="#contact" class="btn btn-alt">Contact Me</a>
   </div>
-  <div class="h-status"><span class="dpulse"></span>OPEN TO CYBERSECURITY OPPORTUNITIES</div>
+  <div class="h-status"><span class="dpulse"></span><span id="h-status-txt">OPEN TO CYBERSECURITY OPPORTUNITIES</span></div>
 </section>
 
-<!-- ════════ ABOUT ════════ -->
 <section id="about">
   <div class="w">
     <p class="ey rev">// 01 — Identity</p>
     <h2 class="st rev">About Me</h2>
     <div class="about-grid rev">
-      <div class="av">
-        <img src="uploads/profile-pic.png" alt="Mahmoud Sultan">
-      </div>
+      <div class="av"><img src="uploads/profile-pic.png" alt="Mahmoud Sultan"></div>
       <div class="at">
-        <p>I'm <strong>Mahmoud Sultan</strong> — online alias <strong>Mattheustein</strong> — a tech professional based in New Cairo, Egypt. Currently serving as Business Support Specialist at <strong>Vodafone Business UK</strong> while transitioning deep into cybersecurity.</p>
-        <p>My background spans technical support, cloud infrastructure, and business operations — giving me a practical, risk-aware perspective on security. I hold Google Cloud and network security certifications, and I'm enrolled in Egypt's Digital Egypt Pioneers Initiative (DEPI) software testing program.</p>
-        <p>I communicate in <strong>Arabic</strong> (native), <strong>English</strong> (professional), and <strong>Spanish</strong> (elementary) — effective across diverse global teams.</p>
+        <p id="ab-p1">I'm <strong>Mahmoud Sultan</strong> — online alias <strong>Mattheustein</strong> — a tech professional based in New Cairo, Egypt. Currently serving as Business Support Specialist at <strong>Vodafone Business UK</strong> while transitioning deep into cybersecurity.</p>
+        <p id="ab-p2">My background spans technical support, cloud infrastructure, and business operations — giving me a practical, risk-aware perspective on security. I hold Google Cloud and network security certifications, and I'm enrolled in Egypt's Digital Egypt Pioneers Initiative (DEPI) software testing program.</p>
+        <p id="ab-p3">I communicate in <strong>Arabic</strong> (native), <strong>English</strong> (professional), and <strong>Spanish</strong> (elementary) — effective across diverse global teams.</p>
         <div class="srow">
-          <div class="st2"><span class="sn">3+</span><span class="sl2">Yrs at Vodafone</span></div>
-          <div class="st2"><span class="sn">5</span><span class="sl2">Certifications</span></div>
-          <div class="st2"><span class="sn">3</span><span class="sl2">Languages</span></div>
+          <div class="st2"><span class="sn" id="st-n1">3+</span><span class="sl2" id="st-l1">Yrs at Vodafone</span></div>
+          <div class="st2"><span class="sn" id="st-n2">5</span><span class="sl2" id="st-l2">Certifications</span></div>
+          <div class="st2"><span class="sn" id="st-n3">3</span><span class="sl2" id="st-l3">Languages</span></div>
         </div>
       </div>
     </div>
   </div>
 </section>
 
-<!-- ════════ SKILLS ════════ -->
 <section id="skills">
   <div class="w">
     <p class="ey rev">// 02 — Arsenal</p>
     <h2 class="st rev">Skills &amp; Tools</h2>
     <div class="sg rev">
-      <div>
+      <div id="sk-sec">
         <p class="ct">Security Domains</p>
         <div class="sk"><div class="sk-h"><span>Cybersecurity Fundamentals</span><span>80%</span></div><div class="sk-t"><div class="sk-f" data-p="80"></div></div></div>
         <div class="sk"><div class="sk-h"><span>Network Security</span><span>75%</span></div><div class="sk-t"><div class="sk-f" data-p="75"></div></div></div>
         <div class="sk"><div class="sk-h"><span>Cloud Security (GCP)</span><span>72%</span></div><div class="sk-t"><div class="sk-f" data-p="72"></div></div></div>
         <div class="sk"><div class="sk-h"><span>Risk Management</span><span>78%</span></div><div class="sk-t"><div class="sk-f" data-p="78"></div></div></div>
       </div>
-      <div>
+      <div id="sk-tech">
         <p class="ct">Technical &amp; Operations</p>
         <div class="sk"><div class="sk-h"><span>Software Testing / QA</span><span>75%</span></div><div class="sk-t"><div class="sk-f" data-p="75"></div></div></div>
         <div class="sk"><div class="sk-h"><span>SDLC</span><span>70%</span></div><div class="sk-t"><div class="sk-f" data-p="70"></div></div></div>
         <div class="sk"><div class="sk-h"><span>Process Improvement</span><span>88%</span></div><div class="sk-t"><div class="sk-f" data-p="88"></div></div></div>
         <div class="sk"><div class="sk-h"><span>Technical Support</span><span>92%</span></div><div class="sk-t"><div class="sk-f" data-p="92"></div></div></div>
       </div>
-      <div>
+      <div id="sk-plat">
         <p class="ct">Platforms &amp; Tools</p>
-        <div class="tags">
-          <span class="tag">Google Cloud</span>
-          <span class="tag">Kali Linux</span>
-          <span class="tag">Wireshark</span>
-          <span class="tag">Nmap</span>
-          <span class="tag">SWIFT (CRM)</span>
-          <span class="tag">Microsoft Teams</span>
-          <span class="tag">Linux CLI</span>
-          <span class="tag">CRM Systems</span>
-        </div>
+        <div class="tags"><span class="tag">Google Cloud</span><span class="tag">Kali Linux</span><span class="tag">Wireshark</span><span class="tag">Nmap</span><span class="tag">SWIFT (CRM)</span><span class="tag">Microsoft Teams</span><span class="tag">Linux CLI</span><span class="tag">CRM Systems</span></div>
       </div>
-      <div>
+      <div id="sk-soft">
         <p class="ct">Soft Skills</p>
-        <div class="tags">
-          <span class="tag">Communication</span>
-          <span class="tag">SLA Management</span>
-          <span class="tag">Problem-Solving</span>
-          <span class="tag">Partner Support</span>
-          <span class="tag">Cross-team Collab</span>
-          <span class="tag">Business Development</span>
-          <span class="tag">Multilingual (3)</span>
-        </div>
+        <div class="tags"><span class="tag">Communication</span><span class="tag">SLA Management</span><span class="tag">Problem-Solving</span><span class="tag">Partner Support</span><span class="tag">Cross-team Collab</span><span class="tag">Business Development</span><span class="tag">Multilingual (3)</span></div>
       </div>
     </div>
   </div>
 </section>
 
-<!-- ════════ EXPERIENCE ════════ -->
 <section id="experience">
   <div class="w">
     <p class="ey rev">// 03 — Operations Log</p>
     <h2 class="st rev">Experience</h2>
-    <div class="tl rev">
-
-      <div class="ti">
-        <div class="dot now"></div>
-        <p class="td">AUG 2024 — PRESENT &nbsp;·&nbsp; 1 YR 10 MO</p>
-        <h3 class="tr">Business Support Specialist</h3>
-        <p class="tc2">Vodafone Business UK — United Kingdom</p>
-        <p class="tdesc">Managing administration, sales and provisioning requests from Partners and Business Managers within defined SLAs. Leading process improvement initiatives, access management for partners, contracts management in SWIFT, and onboarding support. Proactively supporting Business Managers via email, phone and Teams.</p>
-      </div>
-
-      <div class="ti">
-        <div class="dot now"></div>
-        <p class="td">NOV 2025 — PRESENT &nbsp;·&nbsp; 7 MO</p>
-        <h3 class="tr">Software Testing Trainee</h3>
-        <p class="tc2">Digital Egypt Pioneers Initiative (DEPI) — Cairo, Egypt</p>
-        <p class="tdesc">Developing practical skills in software testing methodologies, QA practices, and secure software development lifecycle as part of Egypt's national digital upskilling initiative.</p>
-      </div>
-
-      <div class="ti">
-        <div class="dot"></div>
-        <p class="td">JAN 2025 — SEP 2025 &nbsp;·&nbsp; 9 MO</p>
-        <h3 class="tr">Business Development Specialist</h3>
-        <p class="tc2">iSky Tech — Sharjah, UAE</p>
-        <p class="tdesc">Drove client acquisition and partnership strategies in the technology sector, aligning technical solutions with client operational and security requirements.</p>
-      </div>
-
-      <div class="ti">
-        <div class="dot"></div>
-        <p class="td">MAR 2023 — AUG 2024 &nbsp;·&nbsp; 1 YR 6 MO</p>
-        <h3 class="tr">HBB Xperts Technician</h3>
-        <p class="tc2">Vodafone UK (VOIS) — United Kingdom</p>
-        <p class="tdesc">Frontline technical interface for Vodafone UK home broadband customers. Troubleshot connectivity issues, managed technical service requests, and collaborated with engineering teams on complex escalations. Maintained high customer satisfaction standards.</p>
-      </div>
-
-      <div class="ti">
-        <div class="dot"></div>
-        <p class="td">MAR 2023 — SEP 2023 &nbsp;·&nbsp; 7 MO</p>
-        <h3 class="tr">Student Guide — DECI Initiative</h3>
-        <p class="tc2">Udacity — Cairo, Egypt</p>
-        <p class="tdesc">Mentored students through Udacity's Digital Egypt Creatives Initiative, providing technical guidance and supporting learning outcomes across technology disciplines.</p>
-      </div>
-
-      <div class="ti">
-        <div class="dot"></div>
-        <p class="td">MAY 2022 — DEC 2022 &nbsp;·&nbsp; 8 MO</p>
-        <h3 class="tr">Marketing Ambassador</h3>
-        <p class="tc2">OBM Education — Cairo, Egypt</p>
-        <p class="tdesc">Brand ambassador and marketing representative, building community presence and driving engagement for educational programs.</p>
-      </div>
-
+    <div class="tl rev" id="exp-list">
+      <div class="ti"><div class="dot now"></div><p class="td">AUG 2024 — PRESENT &nbsp;·&nbsp; 1 YR 10 MO</p><h3 class="tr">Business Support Specialist</h3><p class="tc2">Vodafone Business UK — United Kingdom</p><p class="tdesc">Managing administration, sales and provisioning requests from Partners and Business Managers within defined SLAs. Leading process improvement initiatives, access management for partners, contracts management in SWIFT, and onboarding support. Proactively supporting Business Managers via email, phone and Teams.</p></div>
+      <div class="ti"><div class="dot now"></div><p class="td">NOV 2025 — PRESENT &nbsp;·&nbsp; 7 MO</p><h3 class="tr">Software Testing Trainee</h3><p class="tc2">Digital Egypt Pioneers Initiative (DEPI) — Cairo, Egypt</p><p class="tdesc">Developing practical skills in software testing methodologies, QA practices, and secure software development lifecycle as part of Egypt's national digital upskilling initiative.</p></div>
+      <div class="ti"><div class="dot"></div><p class="td">JAN 2025 — SEP 2025 &nbsp;·&nbsp; 9 MO</p><h3 class="tr">Business Development Specialist</h3><p class="tc2">iSky Tech — Sharjah, UAE</p><p class="tdesc">Drove client acquisition and partnership strategies in the technology sector, aligning technical solutions with client operational and security requirements.</p></div>
+      <div class="ti"><div class="dot"></div><p class="td">MAR 2023 — AUG 2024 &nbsp;·&nbsp; 1 YR 6 MO</p><h3 class="tr">HBB Xperts Technician</h3><p class="tc2">Vodafone UK (VOIS) — United Kingdom</p><p class="tdesc">Frontline technical interface for Vodafone UK home broadband customers. Troubleshot connectivity issues, managed technical service requests, and collaborated with engineering teams on complex escalations.</p></div>
+      <div class="ti"><div class="dot"></div><p class="td">MAR 2023 — SEP 2023 &nbsp;·&nbsp; 7 MO</p><h3 class="tr">Student Guide — DECI Initiative</h3><p class="tc2">Udacity — Cairo, Egypt</p><p class="tdesc">Mentored students through Udacity's Digital Egypt Creatives Initiative, providing technical guidance and supporting learning outcomes across technology disciplines.</p></div>
+      <div class="ti"><div class="dot"></div><p class="td">MAY 2022 — DEC 2022 &nbsp;·&nbsp; 8 MO</p><h3 class="tr">Marketing Ambassador</h3><p class="tc2">OBM Education — Cairo, Egypt</p><p class="tdesc">Brand ambassador and marketing representative, building community presence and driving engagement for educational programs.</p></div>
     </div>
   </div>
 </section>
 
-<!-- ════════ CREDENTIALS ════════ -->
 <section id="certs">
   <div class="w">
     <p class="ey rev">// 04 — Certifications</p>
     <h2 class="st rev">Credentials</h2>
-    <div class="cg rev">
-      <div class="cc">
-        <div class="ci">&#9729;</div>
-        <p class="cn">Google Cloud Essentials</p>
-        <p class="co">Google Cloud</p>
-      </div>
-      <div class="cc">
-        <div class="ci">&#11041;</div>
-        <p class="cn">Build &amp; Secure Networks in Google Cloud</p>
-        <p class="co">Google Cloud</p>
-      </div>
-      <div class="cc">
-        <div class="ci">&#10792;</div>
-        <p class="cn">Cyber Security Essentials</p>
-        <p class="co">Cisco Networking Academy</p>
-      </div>
-      <div class="cc">
-        <div class="ci">&#9677;</div>
-        <p class="cn">Vodafone Learning Silver Badge — FY 25/26</p>
-        <p class="co">Vodafone</p>
-      </div>
-      <div class="cc">
-        <div class="ci">&#9670;</div>
-        <p class="cn">Commercial Acumen Program</p>
-        <p class="co">Vodafone</p>
-      </div>
+    <div class="cg rev" id="cert-list">
+      <div class="cc"><div class="ci">&#9729;</div><p class="cn">Google Cloud Essentials</p><p class="co">Google Cloud</p></div>
+      <div class="cc"><div class="ci">&#11041;</div><p class="cn">Build &amp; Secure Networks in Google Cloud</p><p class="co">Google Cloud</p></div>
+      <div class="cc"><div class="ci">&#10792;</div><p class="cn">Cyber Security Essentials</p><p class="co">Cisco Networking Academy</p></div>
+      <div class="cc"><div class="ci">&#9677;</div><p class="cn">Vodafone Learning Silver Badge — FY 25/26</p><p class="co">Vodafone</p></div>
+      <div class="cc"><div class="ci">&#9670;</div><p class="cn">Commercial Acumen Program</p><p class="co">Vodafone</p></div>
     </div>
-
     <p class="ey rev" style="margin-top:64px">// Education</p>
     <h2 class="st rev">Education</h2>
-    <div class="el rev">
-      <div class="ec">
-        <div>
-          <p class="ed">BSc Computer Science</p>
-          <p class="es">The Open University</p>
-        </div>
-        <p class="ey2">2023 — 2026</p>
-      </div>
-      <div class="ec">
-        <div>
-          <p class="ed">BSc Computer Science</p>
-          <p class="es">Arab Open University</p>
-        </div>
-        <p class="ey2">2023 — 2026</p>
-      </div>
-      <div class="ec">
-        <div>
-          <p class="ed">BSc Computer Science &amp; Chemistry</p>
-          <p class="es">Zagazig University</p>
-        </div>
-        <p class="ey2">2021 — 2023</p>
-      </div>
+    <div class="el rev" id="edu-list">
+      <div class="ec"><div><p class="ed">BSc Computer Science</p><p class="es">The Open University</p></div><p class="ey2">2023 — 2026</p></div>
+      <div class="ec"><div><p class="ed">BSc Computer Science</p><p class="es">Arab Open University</p></div><p class="ey2">2023 — 2026</p></div>
+      <div class="ec"><div><p class="ed">BSc Computer Science &amp; Chemistry</p><p class="es">Zagazig University</p></div><p class="ey2">2021 — 2023</p></div>
     </div>
   </div>
 </section>
 
-<!-- ════════ CONTACT ════════ -->
 <section id="contact">
   <div class="w">
     <p class="ey rev">// 05 — Secure Channel</p>
     <h2 class="st rev">Get In Touch</h2>
     <div class="cg2 rev">
       <div class="ct2">
-        <p>Actively seeking cybersecurity opportunities — security roles, cloud infrastructure, or technical operations. Let's connect and talk about how I can contribute to your team.</p>
-        <a href="mailto:swe.mahmoud.sultan@gmail.com" class="btn">Send Message</a>
+        <p id="ct-blurb">Actively seeking cybersecurity opportunities — security roles, cloud infrastructure, or technical operations. Let's connect and talk about how I can contribute to your team.</p>
+        <a href="mailto:swe.mahmoud.sultan@gmail.com" class="btn ct-email-href" id="ct-email-btn">Send Message</a>
       </div>
       <div class="sl3">
-        <a href="https://www.linkedin.com/in/mattheustein" target="_blank" class="soc">
+        <a href="https://www.linkedin.com/in/mattheustein" target="_blank" class="soc" id="ct-linkedin">
           <svg viewBox="0 0 24 24" fill="currentColor"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-4 0v7h-4V9h4v1.8C15.4 9.5 16 8 16 8zM2 9h4v12H2z"></path><circle cx="4" cy="4" r="2"></circle></svg>
-          linkedin.com/in/mattheustein
+          <span>linkedin.com/in/mattheustein</span>
         </a>
-        <a href="mailto:swe.mahmoud.sultan@gmail.com" class="soc">
+        <a href="mailto:swe.mahmoud.sultan@gmail.com" class="soc ct-email-href" id="ct-email-link">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"></rect><path d="m22 7-10 7L2 7"></path></svg>
-          swe.mahmoud.sultan@gmail.com
+          <span id="ct-email-txt">swe.mahmoud.sultan@gmail.com</span>
         </a>
-        <a href="tel:+201144086778" class="soc">
+        <a href="tel:+201144086778" class="soc" id="ct-phone">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.61 3.18 2 2 0 0 1 3.6 1h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.91a16 16 0 0 0 6.06 6.06l.91-.91a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
-          +20 114 408 6778
+          <span>+20 114 408 6778</span>
         </a>
-        <a href="https://github.com/" target="_blank" class="soc">
+        <a href="#" class="soc" id="ct-github" style="opacity:.5;cursor:default">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path></svg>
-          GitHub — add your handle
+          <span>GitHub — add your handle</span>
         </a>
       </div>
     </div>
@@ -567,30 +312,23 @@
 
 <footer>
   <span>MATTHEUSTEIN &copy; 2026 — MAHMOUD SULTAN — CAIRO, EG</span>
-  <span>// type "root" for terminal access</span>
+  <span>// type "root" for terminal &nbsp;&nbsp;<a href="admin.html" style="opacity:.28;font-size:.55rem">admin</a></span>
 </footer>
 
-<!-- Terminal Easter Egg -->
 <div id="term">
   <div class="tw">
     <div class="tbar">
-      <span class="td2 td-r"></span>
-      <span class="td2 td-y"></span>
-      <span class="td2 td-g"></span>
+      <span class="td2 td-r"></span><span class="td2 td-y"></span><span class="td2 td-g"></span>
       <span class="ttl">mattheustein@sec — bash</span>
       <button class="tcx" id="txbtn">&#x2715;</button>
     </div>
     <div class="tbody2" id="tbody">
       <div id="tout"></div>
-      <div class="trow">
-        <span class="tps">mattheustein@sec:~$</span>
-        <input type="text" id="tin" autocomplete="off" spellcheck="false">
-      </div>
+      <div class="trow"><span class="tps">mattheustein@sec:~$</span><input type="text" id="tin" autocomplete="off" spellcheck="false"></div>
     </div>
   </div>
 </div>
 
-<!-- Tweaks Panel -->
 <div id="twk">
   <div class="twh">// Tweaks</div>
   <span class="twl">Color Theme</span>
@@ -606,223 +344,112 @@
   <div class="twt"><span>Scanlines</span><label class="sw"><input type="checkbox" id="tog-s" checked><span class="sli"></span></label></div>
   <div class="twt"><span>Glitch Effect</span><label class="sw"><input type="checkbox" id="tog-g" checked><span class="sli"></span></label></div>
   <div style="margin-top:14px;padding-top:10px;border-top:1px solid var(--border)">
-    <button onclick="document.getElementById('twk').classList.remove('open');document.getElementById('twk-btn').style.display=''"
-      style="font-family:'Share Tech Mono',monospace;font-size:.55rem;letter-spacing:.1em;color:var(--dim);background:none;border:none;cursor:pointer;text-transform:uppercase">
-      Close Tweaks
-    </button>
+    <button onclick="document.getElementById('twk').classList.remove('open');document.getElementById('twk-btn').style.display=''" style="font-family:'Share Tech Mono',monospace;font-size:.55rem;letter-spacing:.1em;color:var(--dim);background:none;border:none;cursor:pointer;text-transform:uppercase">Close Tweaks</button>
   </div>
 </div>
 <button id="twk-btn" onclick="document.getElementById('twk').classList.add('open');this.style.display='none'">// Tweaks</button>
 
 <script>
-// ═══ CANVAS: MATRIX RAIN ═══
-const cvm = document.getElementById('cv-m'), ctxm = cvm.getContext('2d');
-const cvp = document.getElementById('cv-p'), ctxp = cvp.getContext('2d');
-let W, H, cols, drops, showM = true;
-
-function resize() {
-  W = cvm.width = cvp.width = window.innerWidth;
-  H = cvm.height = cvp.height = window.innerHeight;
-  cols = Math.floor(W / 14);
-  drops = Array.from({length: cols}, () => Math.random() * -(H / 14));
-}
-window.addEventListener('resize', resize);
-resize();
-
-const CHARS = 'アウオカキクサシスタテトナ01101001ABCDEF<>{}[]|\\/*#@!?';
-function drawMatrix() {
-  if (!showM) return;
-  ctxm.fillStyle = 'rgba(2,8,20,.058)';
-  ctxm.fillRect(0, 0, W, H);
-  const c = getComputedStyle(document.documentElement).getPropertyValue('--c1').trim() || '#00d4ff';
-  ctxm.fillStyle = c;
-  ctxm.font = '12px "Share Tech Mono",monospace';
-  ctxm.globalAlpha = 0.88;
-  for (let i = 0; i < drops.length; i++) {
-    ctxm.fillText(CHARS[Math.floor(Math.random() * CHARS.length)], i * 14, drops[i] * 14);
-    if (drops[i] * 14 > H && Math.random() > 0.974) drops[i] = 0;
-    drops[i] += 0.55;
-  }
-  ctxm.globalAlpha = 1;
-}
-
-// ═══ CANVAS: PARTICLES ═══
-let particles = [];
-function mkP() {
-  return {x:Math.random()*W, y:Math.random()*H, vx:(Math.random()-.5)*.38, vy:(Math.random()-.5)*.38, r:Math.random()*1.3+.4, a:Math.random()*.45+.2};
-}
-function syncP() {
-  const n = parseInt(document.getElementById('dens').value) || 60;
-  while (particles.length < n) particles.push(mkP());
-  particles = particles.slice(0, n);
-}
+const cvm=document.getElementById('cv-m'),ctxm=cvm.getContext('2d');
+const cvp=document.getElementById('cv-p'),ctxp=cvp.getContext('2d');
+let W,H,cols,drops,showM=true;
+function resize(){W=cvm.width=cvp.width=window.innerWidth;H=cvm.height=cvp.height=window.innerHeight;cols=Math.floor(W/14);drops=Array.from({length:cols},()=>Math.random()*-(H/14))}
+window.addEventListener('resize',resize);resize();
+const CHARS='アウオカキクサシスタテトナ01101001ABCDEF<>{}[]|\\/*#@!?';
+function drawMatrix(){if(!showM)return;ctxm.fillStyle='rgba(2,8,20,.058)';ctxm.fillRect(0,0,W,H);const c=getComputedStyle(document.documentElement).getPropertyValue('--c1').trim()||'#00d4ff';ctxm.fillStyle=c;ctxm.font='12px "Share Tech Mono",monospace';ctxm.globalAlpha=0.88;for(let i=0;i<drops.length;i++){ctxm.fillText(CHARS[Math.floor(Math.random()*CHARS.length)],i*14,drops[i]*14);if(drops[i]*14>H&&Math.random()>.974)drops[i]=0;drops[i]+=.55}ctxm.globalAlpha=1}
+let particles=[];
+function mkP(){return{x:Math.random()*W,y:Math.random()*H,vx:(Math.random()-.5)*.38,vy:(Math.random()-.5)*.38,r:Math.random()*1.3+.4,a:Math.random()*.45+.2}}
+function syncP(){const n=parseInt(document.getElementById('dens').value)||60;while(particles.length<n)particles.push(mkP());particles=particles.slice(0,n)}
 syncP();
+function drawP(){ctxp.clearRect(0,0,W,H);const c=getComputedStyle(document.documentElement).getPropertyValue('--c1').trim()||'#00d4ff';for(let i=0;i<particles.length;i++){const p=particles[i];p.x+=p.vx;p.y+=p.vy;if(p.x<0||p.x>W)p.vx*=-1;if(p.y<0||p.y>H)p.vy*=-1;ctxp.beginPath();ctxp.arc(p.x,p.y,p.r,0,Math.PI*2);ctxp.fillStyle=c;ctxp.globalAlpha=p.a*.55;ctxp.fill();for(let j=i+1;j<particles.length;j++){const q=particles[j];const dx=p.x-q.x,dy=p.y-q.y,d=Math.sqrt(dx*dx+dy*dy);if(d<150){ctxp.beginPath();ctxp.moveTo(p.x,p.y);ctxp.lineTo(q.x,q.y);ctxp.strokeStyle=c;ctxp.lineWidth=.5;ctxp.globalAlpha=(1-d/150)*.15;ctxp.stroke()}}}ctxp.font='10px "Share Tech Mono",monospace';ctxp.fillStyle=c;const t=Date.now()*.0001;for(let h=0;h<10;h++){ctxp.globalAlpha=.045+Math.sin(t+h)*.015;const hx=(Math.sin(t*.6+h*1.9)*.44+.5)*W,hy=(Math.cos(t*.4+h*2.5)*.44+.5)*H;ctxp.fillText('0x'+((h*0x1A3F+Math.floor(t*10))&0xFFFF).toString(16).toUpperCase().padStart(4,'0'),hx,hy)}ctxp.globalAlpha=1}
+(function loop(){requestAnimationFrame(loop);drawMatrix();drawP()})();
 
-function drawP() {
-  ctxp.clearRect(0, 0, W, H);
-  const c = getComputedStyle(document.documentElement).getPropertyValue('--c1').trim() || '#00d4ff';
-  for (let i = 0; i < particles.length; i++) {
-    const p = particles[i];
-    p.x += p.vx; p.y += p.vy;
-    if (p.x < 0 || p.x > W) p.vx *= -1;
-    if (p.y < 0 || p.y > H) p.vy *= -1;
-    ctxp.beginPath(); ctxp.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-    ctxp.fillStyle = c; ctxp.globalAlpha = p.a * 0.55; ctxp.fill();
-    for (let j = i + 1; j < particles.length; j++) {
-      const q = particles[j];
-      const dx = p.x - q.x, dy = p.y - q.y, d = Math.sqrt(dx*dx + dy*dy);
-      if (d < 150) {
-        ctxp.beginPath(); ctxp.moveTo(p.x, p.y); ctxp.lineTo(q.x, q.y);
-        ctxp.strokeStyle = c; ctxp.lineWidth = 0.5;
-        ctxp.globalAlpha = (1 - d / 150) * 0.15; ctxp.stroke();
+const ROLES=['Cybersecurity Engineer','Network Security Analyst','Cloud Security Specialist','Penetration Tester','Cyber Threat Analyst'];
+let ri=0,ci=0,del=false;
+const rtxt=document.getElementById('rtxt');
+function type(){const cur=ROLES[ri];if(!del){rtxt.textContent=cur.slice(0,++ci);if(ci===cur.length){del=true;setTimeout(type,2400);return}setTimeout(type,62)}else{rtxt.textContent=cur.slice(0,--ci);if(ci===0){del=false;ri=(ri+1)%ROLES.length;setTimeout(type,350);return}setTimeout(type,30)}}
+setTimeout(type,1600);
+
+const obs=new IntersectionObserver(entries=>{entries.forEach(e=>{if(e.isIntersecting){e.target.classList.add('vis');e.target.querySelectorAll('.sk-f').forEach(f=>{f.style.width=f.dataset.p+'%'})}})},{threshold:.12});
+document.querySelectorAll('.rev').forEach(el=>obs.observe(el));
+
+const secEls=[...document.querySelectorAll('section[id]')];
+const navAs=[...document.querySelectorAll('.nl a')];
+window.addEventListener('scroll',()=>{let cur='';secEls.forEach(s=>{if(window.scrollY>=s.offsetTop-210)cur=s.id});navAs.forEach(a=>a.classList.toggle('on',a.getAttribute('href')==='#'+cur))},{passive:true});
+
+const termEl=document.getElementById('term'),tout=document.getElementById('tout'),tin=document.getElementById('tin');
+document.getElementById('txbtn').onclick=()=>termEl.classList.remove('open');
+termEl.addEventListener('click',e=>{if(e.target===termEl)termEl.classList.remove('open')});
+let kbuf='';
+window.addEventListener('keydown',e=>{if(termEl.classList.contains('open')){if(e.key==='Escape')termEl.classList.remove('open');return}kbuf+=e.key.toLowerCase();if(kbuf.length>6)kbuf=kbuf.slice(-6);if(kbuf.endsWith('root')){kbuf='';openTerm()}});
+function openTerm(){termEl.classList.add('open');tout.innerHTML='';tp('╔═══════════════════════════════════════════╗','c');tp('║  MATTHEUSTEIN TERMINAL v2.1               ║','c');tp('║  user: Mahmoud Sultan  alias: mattheustein ║','c');tp('╚═══════════════════════════════════════════╝','c');tp('','');tp('Type "help" for available commands.','o');setTimeout(()=>tin.focus(),80)}
+function tp(txt,cls){const d=document.createElement('div');if(cls==='c')d.style.color='var(--c1)';else if(cls==='o')d.style.color='var(--dim)';else if(cls==='e')d.style.color='#ff5555';d.textContent=txt;tout.appendChild(d);tout.parentElement.scrollTop=99999}
+const CMD={help:()=>{tp('──────────────────────────────────────────','o');[['whoami','Identity & status'],['skills','Skill matrix'],['certs','Certifications'],['experience','Work history'],['education','Academic background'],['contact','Contact info'],['hack','...'],['clear','Clear terminal'],['exit','Close']].forEach(([k,v])=>tp(`  ${k.padEnd(14)} ${v}`,'o'))},whoami:()=>{tp('> Mahmoud Sultan — alias: mattheustein','c');tp('  Role     : Business Support Specialist | Cyber Engineer','o');tp('  Location : New Cairo, Cairo, Egypt','o');tp('  LinkedIn : linkedin.com/in/mattheustein','o');tp('  Status   : Seeking cybersecurity opportunities','o')},skills:()=>{tp('── Skill Matrix ───────────────────────────','c');[['Cybersecurity','████████████████░░░░  80%'],['Network Security','██████████████░░░░░░  75%'],['Cloud (GCP)','██████████████░░░░░░  72%'],['Risk Management','████████████████░░░░  78%'],['Software Testing','██████████████░░░░░░  75%'],['Technical Support','███████████████████░  92%'],['Process Improvement','████████████████████  88%']].forEach(([k,v])=>tp(`  ${k.padEnd(22)} ${v}`,'o'))},certs:()=>{tp('── Certifications ─────────────────────────','c');['Google Cloud Essentials','Build & Secure Networks in GCP','Cyber Security Essentials','Vodafone Learning Silver Badge FY25/26','Commercial Acumen Program'].forEach(c=>tp('  ✓ '+c,'o'))},experience:()=>{tp('── Operations Log ─────────────────────────','c');[['2024–Now ','Business Support Specialist @ Vodafone Business UK'],['2025–Now ','Software Testing Trainee @ DEPI (Egypt)'],['2025     ','Business Development @ iSky Tech (UAE)'],['2023–24  ','HBB Xperts Technician @ Vodafone UK'],['2023     ','Student Guide @ Udacity (DECI)']].forEach(([d,r])=>tp(`  ${d}  ${r}`,'o'))},education:()=>{tp('── Education ──────────────────────────────','c');[['The Open University','BSc Computer Science (2023–2026)'],['Arab Open University','BSc Computer Science (2023–2026)'],['Zagazig University','BSc CS & Chemistry (2021–2023)']].forEach(([s,d])=>tp(`  ${s} — ${d}`,'o'))},contact:()=>{tp('── Secure Channel ─────────────────────────','c');tp('  email   : swe.mahmoud.sultan@gmail.com','o');tp('  linkedin: linkedin.com/in/mattheustein','o');tp('  phone   : +20 114 408 6778','o');tp('  location: New Cairo, Cairo, Egypt','o')},hack:()=>{tp('Initiating unauthorized access...','c');[['Scanning 192.168.1.0/24...','c'],['Found open ports: 22, 80, 443, 8080','o'],['[████████████████░░░░] 80% — cracking...','c'],['ERROR: 2FA blocked. Access denied.','e'],['Tip: Stay ethical. Stay legal. 🛡️','c']].forEach(([m,c],i)=>setTimeout(()=>tp(m,c),i*680))},clear:()=>{tout.innerHTML=''},exit:()=>{termEl.classList.remove('open')}};
+tin.addEventListener('keydown',e=>{if(e.key!=='Enter')return;const cmd=tin.value.trim().toLowerCase();if(cmd){tp('mattheustein@sec:~$ '+cmd,'c');(CMD[cmd]?CMD[cmd]():tp('command not found: '+cmd+' (try "help")','e'))}tin.value=''});
+
+document.querySelectorAll('.tcc').forEach(btn=>{btn.addEventListener('click',()=>{document.querySelectorAll('.tcc').forEach(b=>b.classList.remove('on'));btn.classList.add('on');document.body.className=btn.dataset.t||''})});
+document.getElementById('dens').addEventListener('input',syncP);
+document.getElementById('tog-m').addEventListener('change',e=>{showM=e.target.checked;if(!showM)ctxm.clearRect(0,0,W,H)});
+document.getElementById('tog-s').addEventListener('change',e=>{document.getElementById('scanlines').style.opacity=e.target.checked?'1':'0'});
+document.getElementById('tog-g').addEventListener('change',e=>{document.querySelector('.h-name').classList.toggle('nog',!e.target.checked)});
+
+// ═══ FIREBASE DATA LOADER ═══
+function mkSkillBars(items){return items.map(s=>`<div class="sk"><div class="sk-h"><span>${s.name}</span><span>${s.pct}%</span></div><div class="sk-t"><div class="sk-f" data-p="${s.pct}"></div></div></div>`).join('')}
+function mkTags(items){return`<div class="tags">${items.map(t=>`<span class="tag">${t}</span>`).join('')}</div>`}
+function mkExperience(items){return items.map(e=>`<div class="ti"><div class="dot${e.current?' now':''}"></div><p class="td">${e.date}</p><h3 class="tr">${e.role}</h3><p class="tc2">${e.company}</p><p class="tdesc">${e.desc}</p></div>`).join('')}
+function mkCerts(items){return items.map(c=>`<div class="cc"><div class="ci">${c.icon}</div><p class="cn">${c.name}</p><p class="co">${c.org}</p></div>`).join('')}
+function mkEdu(items){return items.map(e=>`<div class="ec"><div><p class="ed">${e.degree}</p><p class="es">${e.school}</p></div><p class="ey2">${e.years}</p></div>`).join('')}
+
+function reFireSkills(containerEl){
+  const rev=containerEl.closest('.rev');
+  if(rev&&rev.classList.contains('vis')){containerEl.querySelectorAll('.sk-f').forEach(f=>{f.style.width=f.dataset.p+'%'})}
+}
+
+async function loadPortfolioData(){
+  try{
+    const snap=await firebase.firestore().collection('portfolio').doc('data').get();
+    if(!snap.exists)return;
+    const d=snap.data();
+    if(d.hero){
+      const h=d.hero;
+      if(h.pre)document.getElementById('h-pre').textContent=h.pre;
+      if(h.name){const el=document.getElementById('h-name');el.textContent=h.name;el.setAttribute('data-text',h.name)}
+      if(h.roles&&h.roles.length){ROLES.splice(0,ROLES.length,...h.roles)}
+      if(h.bio)document.getElementById('h-bio').textContent=h.bio;
+      if(h.status)document.getElementById('h-status-txt').textContent=h.status;
+    }
+    if(d.about){
+      const a=d.about;
+      if(a.para)a.para.forEach((p,i)=>{const el=document.getElementById('ab-p'+(i+1));if(el)el.innerHTML=p});
+      if(a.stats)a.stats.forEach((s,i)=>{
+        const n=document.getElementById('st-n'+(i+1)),l=document.getElementById('st-l'+(i+1));
+        if(n)n.textContent=s.num;if(l)l.textContent=s.label;
+      });
+    }
+    if(d.skills){
+      const sk=d.skills;
+      if(sk.security){const el=document.getElementById('sk-sec');if(el){el.innerHTML='<p class="ct">Security Domains</p>'+mkSkillBars(sk.security);reFireSkills(el)}}
+      if(sk.technical){const el=document.getElementById('sk-tech');if(el){el.innerHTML='<p class="ct">Technical &amp; Operations</p>'+mkSkillBars(sk.technical);reFireSkills(el)}}
+      if(sk.platforms){const el=document.getElementById('sk-plat');if(el)el.innerHTML='<p class="ct">Platforms &amp; Tools</p>'+mkTags(sk.platforms)}
+      if(sk.soft){const el=document.getElementById('sk-soft');if(el)el.innerHTML='<p class="ct">Soft Skills</p>'+mkTags(sk.soft)}
+    }
+    if(d.experience){const el=document.getElementById('exp-list');if(el)el.innerHTML=mkExperience(d.experience)}
+    if(d.certs){const el=document.getElementById('cert-list');if(el)el.innerHTML=mkCerts(d.certs)}
+    if(d.education){const el=document.getElementById('edu-list');if(el)el.innerHTML=mkEdu(d.education)}
+    if(d.contact){
+      const c=d.contact;
+      if(c.blurb){const el=document.getElementById('ct-blurb');if(el)el.textContent=c.blurb}
+      if(c.email){
+        document.querySelectorAll('.ct-email-href').forEach(el=>el.href='mailto:'+c.email);
+        const sp=document.getElementById('ct-email-txt');if(sp)sp.textContent=c.email;
       }
+      if(c.linkedin){const el=document.getElementById('ct-linkedin');if(el){el.href=c.linkedin;const sp=el.querySelector('span');if(sp)sp.textContent=c.linkedin.replace('https://','')}}
+      if(c.phone){const el=document.getElementById('ct-phone');if(el){el.href='tel:'+c.phone.replace(/[\s-]/g,'');const sp=el.querySelector('span');if(sp)sp.textContent=c.phone}}
+      if(c.github&&c.github.length>0){const el=document.getElementById('ct-github');if(el){el.href=c.github;el.style.opacity='1';el.style.cursor='pointer';const sp=el.querySelector('span');if(sp)sp.textContent=c.github.replace('https://','')}}
     }
-  }
-  // Floating hex overlay
-  ctxp.font = '10px "Share Tech Mono",monospace';
-  ctxp.fillStyle = c;
-  const t = Date.now() * 0.0001;
-  for (let h = 0; h < 10; h++) {
-    ctxp.globalAlpha = 0.045 + Math.sin(t + h) * 0.015;
-    const hx = (Math.sin(t * 0.6 + h * 1.9) * 0.44 + 0.5) * W;
-    const hy = (Math.cos(t * 0.4 + h * 2.5) * 0.44 + 0.5) * H;
-    ctxp.fillText('0x' + ((h * 0x1A3F + Math.floor(t * 10)) & 0xFFFF).toString(16).toUpperCase().padStart(4, '0'), hx, hy);
-  }
-  ctxp.globalAlpha = 1;
+  }catch(e){console.warn('Portfolio data load:',e)}
 }
-
-(function loop() { requestAnimationFrame(loop); drawMatrix(); drawP(); })();
-
-// ═══ TYPEWRITER ═══
-const ROLES = ['Cybersecurity Engineer','Network Security Analyst','Cloud Security Specialist','Penetration Tester','Cyber Threat Analyst'];
-let ri = 0, ci = 0, del = false;
-const rtxt = document.getElementById('rtxt');
-function type() {
-  const cur = ROLES[ri];
-  if (!del) { rtxt.textContent = cur.slice(0, ++ci); if (ci === cur.length) { del = true; setTimeout(type, 2400); return; } setTimeout(type, 62); }
-  else { rtxt.textContent = cur.slice(0, --ci); if (ci === 0) { del = false; ri = (ri + 1) % ROLES.length; setTimeout(type, 350); return; } setTimeout(type, 30); }
-}
-setTimeout(type, 1600);
-
-// ═══ INTERSECTION OBSERVER ═══
-const obs = new IntersectionObserver(entries => {
-  entries.forEach(e => {
-    if (e.isIntersecting) {
-      e.target.classList.add('vis');
-      e.target.querySelectorAll('.sk-f').forEach(f => { f.style.width = f.dataset.p + '%'; });
-    }
-  });
-}, {threshold: 0.12});
-document.querySelectorAll('.rev').forEach(el => obs.observe(el));
-
-// ═══ NAV ACTIVE ═══
-const secEls = [...document.querySelectorAll('section[id]')];
-const navAs = [...document.querySelectorAll('.nl a')];
-window.addEventListener('scroll', () => {
-  let cur = '';
-  secEls.forEach(s => { if (window.scrollY >= s.offsetTop - 210) cur = s.id; });
-  navAs.forEach(a => a.classList.toggle('on', a.getAttribute('href') === '#' + cur));
-}, {passive: true});
-
-// ═══ TERMINAL ═══
-const termEl = document.getElementById('term');
-const tout = document.getElementById('tout');
-const tin = document.getElementById('tin');
-document.getElementById('txbtn').onclick = () => termEl.classList.remove('open');
-termEl.addEventListener('click', e => { if (e.target === termEl) termEl.classList.remove('open'); });
-
-let kbuf = '';
-window.addEventListener('keydown', e => {
-  if (termEl.classList.contains('open')) { if (e.key === 'Escape') termEl.classList.remove('open'); return; }
-  kbuf += e.key.toLowerCase();
-  if (kbuf.length > 6) kbuf = kbuf.slice(-6);
-  if (kbuf.endsWith('root')) { kbuf = ''; openTerm(); }
-});
-
-function openTerm() {
-  termEl.classList.add('open');
-  tout.innerHTML = '';
-  tp('╔═══════════════════════════════════════════╗', 'c');
-  tp('║  MATTHEUSTEIN TERMINAL v2.1               ║', 'c');
-  tp('║  user: Mahmoud Sultan  alias: mattheustein ║', 'c');
-  tp('╚═══════════════════════════════════════════╝', 'c');
-  tp('', '');
-  tp('Type "help" for available commands.', 'o');
-  setTimeout(() => tin.focus(), 80);
-}
-
-function tp(txt, cls) {
-  const d = document.createElement('div');
-  if (cls === 'c') d.style.color = 'var(--c1)';
-  else if (cls === 'o') d.style.color = 'var(--dim)';
-  else if (cls === 'e') d.style.color = '#ff5555';
-  d.textContent = txt;
-  tout.appendChild(d);
-  tout.parentElement.scrollTop = 99999;
-}
-
-const CMD = {
-  help: () => {
-    tp('──────────────────────────────────────────', 'o');
-    [['whoami','Identity & status'],['skills','Skill matrix'],['certs','Certifications'],['experience','Work history'],['education','Academic background'],['contact','Contact info'],['hack','...'],['clear','Clear terminal'],['exit','Close']].forEach(([k,v]) => tp(`  ${k.padEnd(14)} ${v}`, 'o'));
-  },
-  whoami: () => {
-    tp('> Mahmoud Sultan — alias: mattheustein', 'c');
-    tp('  Role     : Business Support Specialist | Cyber Engineer', 'o');
-    tp('  Location : New Cairo, Cairo, Egypt', 'o');
-    tp('  LinkedIn : linkedin.com/in/mattheustein', 'o');
-    tp('  Status   : Seeking cybersecurity opportunities', 'o');
-  },
-  skills: () => {
-    tp('── Skill Matrix ───────────────────────────', 'c');
-    [['Cybersecurity','████████████████░░░░  80%'],['Network Security','██████████████░░░░░░  75%'],['Cloud (GCP)','██████████████░░░░░░  72%'],['Risk Management','████████████████░░░░  78%'],['Software Testing','██████████████░░░░░░  75%'],['Technical Support','███████████████████░  92%'],['Process Improvement','████████████████████  88%']].forEach(([k,v]) => tp(`  ${k.padEnd(22)} ${v}`, 'o'));
-  },
-  certs: () => {
-    tp('── Certifications ─────────────────────────', 'c');
-    ['Google Cloud Essentials','Build & Secure Networks in GCP','Cyber Security Essentials','Vodafone Learning Silver Badge FY25/26','Commercial Acumen Program'].forEach(c => tp('  ✓ ' + c, 'o'));
-  },
-  experience: () => {
-    tp('── Operations Log ─────────────────────────', 'c');
-    [['2024–Now ','Business Support Specialist @ Vodafone Business UK'],['2025–Now ','Software Testing Trainee @ DEPI (Egypt)'],['2025     ','Business Development @ iSky Tech (UAE)'],['2023–24  ','HBB Xperts Technician @ Vodafone UK'],['2023     ','Student Guide @ Udacity (DECI)']].forEach(([d,r]) => tp(`  ${d}  ${r}`, 'o'));
-  },
-  education: () => {
-    tp('── Education ──────────────────────────────', 'c');
-    [['The Open University','BSc Computer Science (2023–2026)'],['Arab Open University','BSc Computer Science (2023–2026)'],['Zagazig University','BSc CS & Chemistry (2021–2023)']].forEach(([s,d]) => tp(`  ${s} — ${d}`, 'o'));
-  },
-  contact: () => {
-    tp('── Secure Channel ─────────────────────────', 'c');
-    tp('  email   : swe.mahmoud.sultan@gmail.com', 'o');
-    tp('  linkedin: linkedin.com/in/mattheustein', 'o');
-    tp('  phone   : +20 114 408 6778', 'o');
-    tp('  location: New Cairo, Cairo, Egypt', 'o');
-  },
-  hack: () => {
-    tp('Initiating unauthorized access...', 'c');
-    [['Scanning 192.168.1.0/24...','c'],['Found open ports: 22, 80, 443, 8080','o'],['[████████████████░░░░] 80% — cracking...','c'],['ERROR: 2FA blocked. Access denied.','e'],['Tip: Stay ethical. Stay legal. 🛡️','c']].forEach(([m,c], i) => setTimeout(() => tp(m, c), i * 680));
-  },
-  clear: () => { tout.innerHTML = ''; },
-  exit: () => { termEl.classList.remove('open'); }
-};
-
-tin.addEventListener('keydown', e => {
-  if (e.key !== 'Enter') return;
-  const cmd = tin.value.trim().toLowerCase();
-  if (cmd) { tp('mattheustein@sec:~$ ' + cmd, 'c'); (CMD[cmd] ? CMD[cmd]() : tp('command not found: ' + cmd + ' (try "help")', 'e')); }
-  tin.value = '';
-});
-
-// ═══ TWEAKS ═══
-document.querySelectorAll('.tcc').forEach(btn => {
-  btn.addEventListener('click', () => {
-    document.querySelectorAll('.tcc').forEach(b => b.classList.remove('on'));
-    btn.classList.add('on');
-    document.body.className = btn.dataset.t || '';
-  });
-});
-document.getElementById('dens').addEventListener('input', syncP);
-document.getElementById('tog-m').addEventListener('change', e => { showM = e.target.checked; if (!showM) ctxm.clearRect(0,0,W,H); });
-document.getElementById('tog-s').addEventListener('change', e => { document.getElementById('scanlines').style.opacity = e.target.checked ? '1' : '0'; });
-document.getElementById('tog-g').addEventListener('change', e => { document.querySelector('.h-name').classList.toggle('nog', !e.target.checked); });
+loadPortfolioData();
 </script>
 </body>
 </html>
