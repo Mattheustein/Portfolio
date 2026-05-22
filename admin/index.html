@@ -96,6 +96,10 @@
     .checkbox-row{display:flex;align-items:center;gap:10px;margin-top:10px}
     .checkbox-row label{font-family:'Share Tech Mono',monospace;font-size:.62rem;color:var(--dim)}
     .checkbox-row input[type=checkbox]{accent-color:var(--c1);width:14px;height:14px;cursor:pointer}
+    .theme-swatch{width:72px;height:72px;border-radius:4px;border:3px solid transparent;cursor:pointer;position:relative;transition:border-color .2s,transform .15s;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;padding-bottom:6px}
+    .theme-swatch span{font-family:'Share Tech Mono',monospace;font-size:.48rem;letter-spacing:.08em;color:#020814;text-transform:uppercase;font-weight:700;text-shadow:0 0 4px rgba(255,255,255,.4)}
+    .theme-swatch.active{border-color:#fff;transform:scale(1.08)}
+    .theme-swatch:hover:not(.active){border-color:rgba(255,255,255,.5)}
     @media(max-width:600px){.row2,.row3{grid-template-columns:1fr}.admin-nav{padding:10px 16px;flex-wrap:wrap;gap:8px}.editor-body{padding:20px 16px}.tab-bar{padding:0 8px}}
   </style>
 </head>
@@ -133,8 +137,7 @@
     <div class="creds-hint">
       <p>
         <strong>// Login credentials</strong><br>
-        Email &nbsp;&nbsp;: <strong>swe.mahmoud.sultan@gmail.com</strong><br>
-        Password: <strong>Mattheustein@2026!</strong><br><br>
+        Email: <strong>swe.mahmoud.sultan@gmail.com</strong><br><br>
         Change your password from the Account tab after login.
       </p>
     </div>
@@ -162,7 +165,9 @@
     <button class="tab-btn" data-tab="experience">Experience</button>
     <button class="tab-btn" data-tab="creds">Credentials</button>
     <button class="tab-btn" data-tab="contact">Contact</button>
+    <button class="tab-btn" data-tab="theme">Theme</button>
     <button class="tab-btn" data-tab="account">Account</button>
+    <!-- NEW SECTIONS: add tab buttons here -->
   </div>
 
   <div class="editor-body">
@@ -238,6 +243,31 @@
       </div>
       <div class="field-group"><label class="field-label">LinkedIn URL</label><input type="url" class="field" id="ct-linkedin"></div>
       <div class="field-group"><label class="field-label">GitHub URL</label><input type="url" class="field" id="ct-github"></div>
+    </div>
+
+    <!-- NEW SECTIONS: add tab-pane blocks here, id="tab-{name}" -->
+
+    <!-- THEME -->
+    <div class="tab-pane" id="tab-theme">
+      <div class="field-group">
+        <label class="field-label">Color Theme</label>
+        <span class="field-hint">Applies to all visitors. Saved with "Save &amp; Publish".</span>
+      </div>
+      <div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:28px">
+        <button class="theme-swatch active" data-preset="" style="background:#00d4ff" title="Cyber Cyan (Default)">
+          <span>Cyber Cyan</span>
+        </button>
+        <button class="theme-swatch" data-preset="t-green" style="background:#00ff9f" title="Matrix Green">
+          <span>Matrix Green</span>
+        </button>
+        <button class="theme-swatch" data-preset="t-pink" style="background:#ff3cac" title="Synthwave">
+          <span>Synthwave</span>
+        </button>
+        <button class="theme-swatch" data-preset="t-red" style="background:#ff3300" title="Red Team">
+          <span>Red Team</span>
+        </button>
+      </div>
+      <div style="font-family:'Share Tech Mono',monospace;font-size:.58rem;color:var(--dim)">// Selected theme is highlighted. Hit "Save &amp; Publish" to apply globally.</div>
     </div>
 
     <!-- ACCOUNT -->
@@ -324,6 +354,16 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
 });
 
 // ── DEFAULTS ──
+// ── THEME SWATCHES ──
+let activeThemePreset = '';
+document.querySelectorAll('.theme-swatch').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.theme-swatch').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    activeThemePreset = btn.dataset.preset;
+  });
+});
+
 const DEFAULTS = {
   hero: {
     pre: '// identity.init() — mahmoud sultan',
@@ -366,6 +406,7 @@ const DEFAULTS = {
     {degree:'BSc Computer Science',school:'Arab Open University',years:'2023 — 2026'},
     {degree:'BSc Computer Science & Chemistry',school:'Zagazig University',years:'2021 — 2023'}
   ],
+  theme: { preset: '' },
   contact: {
     blurb:"Actively seeking cybersecurity opportunities — security roles, cloud infrastructure, or technical operations. Let's connect and talk about how I can contribute to your team.",
     email:'swe.mahmoud.sultan@gmail.com',linkedin:'https://www.linkedin.com/in/mattheustein',phone:'+20 114 408 6778',github:''
@@ -406,6 +447,8 @@ function populateForms(d) {
   renderExpEditor(d.experience || []);
   renderCertEditor(d.certs || []);
   renderEduEditor(d.education || []);
+  activeThemePreset = (d.theme && d.theme.preset) || '';
+  document.querySelectorAll('.theme-swatch').forEach(b => b.classList.toggle('active', b.dataset.preset === activeThemePreset));
   const c = d.contact || {};
   document.getElementById('ct-blurb').value = c.blurb || '';
   document.getElementById('ct-email').value = c.email || '';
@@ -529,6 +572,7 @@ function collectData() {
     hero:{ pre:document.getElementById('hero-pre').value.trim(), name:document.getElementById('hero-name').value.trim(), roles:document.getElementById('hero-roles').value.split('\n').map(r=>r.trim()).filter(Boolean), bio:document.getElementById('hero-bio').value.trim(), status:document.getElementById('hero-status').value.trim() },
     about:{ para:[document.getElementById('ab-p1').value.trim(),document.getElementById('ab-p2').value.trim(),document.getElementById('ab-p3').value.trim()].filter(Boolean), stats },
     skills:{ security:getSkillList('sk-security'), technical:getSkillList('sk-technical'), platforms:document.getElementById('sk-platforms').value.split(',').map(t=>t.trim()).filter(Boolean), soft:document.getElementById('sk-soft').value.split(',').map(t=>t.trim()).filter(Boolean) },
+    theme:{ preset: activeThemePreset },
     experience:getExpList(), certs:getCertList(), education:getEduList(),
     contact:{ blurb:document.getElementById('ct-blurb').value.trim(), email:document.getElementById('ct-email').value.trim(), phone:document.getElementById('ct-phone').value.trim(), linkedin:document.getElementById('ct-linkedin').value.trim(), github:document.getElementById('ct-github').value.trim() }
   };

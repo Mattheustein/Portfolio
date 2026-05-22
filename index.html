@@ -331,13 +331,6 @@
 
 <div id="twk">
   <div class="twh">// Tweaks</div>
-  <span class="twl">Color Theme</span>
-  <div class="twcols">
-    <span class="tcc on" style="background:#00d4ff" data-t="" title="Cyber Cyan"></span>
-    <span class="tcc" style="background:#00ff9f" data-t="t-green" title="Matrix Green"></span>
-    <span class="tcc" style="background:#ff3cac" data-t="t-pink" title="Synthwave"></span>
-    <span class="tcc" style="background:#ff3300" data-t="t-red" title="Red Team"></span>
-  </div>
   <span class="twl">Particle Density</span>
   <input type="range" class="twr" id="dens" min="20" max="110" value="60">
   <div class="twt"><span>Matrix Rain</span><label class="sw"><input type="checkbox" id="tog-m" checked><span class="sli"></span></label></div>
@@ -387,7 +380,6 @@ function tp(txt,cls){const d=document.createElement('div');if(cls==='c')d.style.
 const CMD={help:()=>{tp('──────────────────────────────────────────','o');[['whoami','Identity & status'],['skills','Skill matrix'],['certs','Certifications'],['experience','Work history'],['education','Academic background'],['contact','Contact info'],['hack','...'],['clear','Clear terminal'],['exit','Close']].forEach(([k,v])=>tp(`  ${k.padEnd(14)} ${v}`,'o'))},whoami:()=>{tp('> Mahmoud Sultan — alias: mattheustein','c');tp('  Role     : Business Support Specialist | Cyber Engineer','o');tp('  Location : New Cairo, Cairo, Egypt','o');tp('  LinkedIn : linkedin.com/in/mattheustein','o');tp('  Status   : Seeking cybersecurity opportunities','o')},skills:()=>{tp('── Skill Matrix ───────────────────────────','c');[['Cybersecurity','████████████████░░░░  80%'],['Network Security','██████████████░░░░░░  75%'],['Cloud (GCP)','██████████████░░░░░░  72%'],['Risk Management','████████████████░░░░  78%'],['Software Testing','██████████████░░░░░░  75%'],['Technical Support','███████████████████░  92%'],['Process Improvement','████████████████████  88%']].forEach(([k,v])=>tp(`  ${k.padEnd(22)} ${v}`,'o'))},certs:()=>{tp('── Certifications ─────────────────────────','c');['Google Cloud Essentials','Build & Secure Networks in GCP','Cyber Security Essentials','Vodafone Learning Silver Badge FY25/26','Commercial Acumen Program'].forEach(c=>tp('  ✓ '+c,'o'))},experience:()=>{tp('── Operations Log ─────────────────────────','c');[['2024–Now ','Business Support Specialist @ Vodafone Business UK'],['2025–Now ','Software Testing Trainee @ DEPI (Egypt)'],['2025     ','Business Development @ iSky Tech (UAE)'],['2023–24  ','HBB Xperts Technician @ Vodafone UK'],['2023     ','Student Guide @ Udacity (DECI)']].forEach(([d,r])=>tp(`  ${d}  ${r}`,'o'))},education:()=>{tp('── Education ──────────────────────────────','c');[['The Open University','BSc Computer Science (2023–2026)'],['Arab Open University','BSc Computer Science (2023–2026)'],['Zagazig University','BSc CS & Chemistry (2021–2023)']].forEach(([s,d])=>tp(`  ${s} — ${d}`,'o'))},contact:()=>{tp('── Secure Channel ─────────────────────────','c');tp('  email   : swe.mahmoud.sultan@gmail.com','o');tp('  linkedin: linkedin.com/in/mattheustein','o');tp('  phone   : +20 114 408 6778','o');tp('  location: New Cairo, Cairo, Egypt','o')},hack:()=>{tp('Initiating unauthorized access...','c');[['Scanning 192.168.1.0/24...','c'],['Found open ports: 22, 80, 443, 8080','o'],['[████████████████░░░░] 80% — cracking...','c'],['ERROR: 2FA blocked. Access denied.','e'],['Tip: Stay ethical. Stay legal. 🛡️','c']].forEach(([m,c],i)=>setTimeout(()=>tp(m,c),i*680))},clear:()=>{tout.innerHTML=''},exit:()=>{termEl.classList.remove('open')}};
 tin.addEventListener('keydown',e=>{if(e.key!=='Enter')return;const cmd=tin.value.trim().toLowerCase();if(cmd){tp('mattheustein@sec:~$ '+cmd,'c');(CMD[cmd]?CMD[cmd]():tp('command not found: '+cmd+' (try "help")','e'))}tin.value=''});
 
-document.querySelectorAll('.tcc').forEach(btn=>{btn.addEventListener('click',()=>{document.querySelectorAll('.tcc').forEach(b=>b.classList.remove('on'));btn.classList.add('on');document.body.className=btn.dataset.t||''})});
 document.getElementById('dens').addEventListener('input',syncP);
 document.getElementById('tog-m').addEventListener('change',e=>{showM=e.target.checked;if(!showM)ctxm.clearRect(0,0,W,H)});
 document.getElementById('tog-s').addEventListener('change',e=>{document.getElementById('scanlines').style.opacity=e.target.checked?'1':'0'});
@@ -447,6 +439,7 @@ async function loadPortfolioData(){
       if(c.phone){const el=document.getElementById('ct-phone');if(el){el.href='tel:'+c.phone.replace(/[\s-]/g,'');const sp=el.querySelector('span');if(sp)sp.textContent=c.phone}}
       if(c.github&&c.github.length>0){const el=document.getElementById('ct-github');if(el){el.href=c.github;el.style.opacity='1';el.style.cursor='pointer';const sp=el.querySelector('span');if(sp)sp.textContent=c.github.replace('https://','')}}
     }
+    if(d.theme&&d.theme.preset!==undefined)document.body.className=d.theme.preset||'';
   }catch(e){console.warn('Portfolio data load:',e)}
 }
 loadPortfolioData();
