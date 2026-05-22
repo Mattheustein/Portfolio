@@ -189,16 +189,12 @@
 
     <!-- ABOUT -->
     <div class="tab-pane" id="tab-about">
-      <div class="field-group">
-        <label class="field-label">Paragraph 1</label>
-        <span class="field-hint">HTML allowed — use &lt;strong&gt;word&lt;/strong&gt; to highlight.</span>
-        <textarea class="field" id="ab-p1" rows="4"></textarea>
-      </div>
-      <div class="field-group"><label class="field-label">Paragraph 2</label><textarea class="field" id="ab-p2" rows="4"></textarea></div>
-      <div class="field-group"><label class="field-label">Paragraph 3</label><textarea class="field" id="ab-p3" rows="4"></textarea></div>
+      <div class="list-header"><span class="list-title">About Paragraphs</span><button class="add-btn" id="add-para">+ Add Paragraph</button></div>
+      <span class="field-hint" style="display:block;margin-bottom:10px">HTML allowed — use &lt;strong&gt;word&lt;/strong&gt; to highlight.</span>
+      <div id="para-editor"></div>
       <hr class="section-divider">
-      <div class="list-header"><span class="list-title">Stats Row (3 items)</span></div>
-      <div class="row3" id="stats-editor"></div>
+      <div class="list-header"><span class="list-title">Stats Row</span><button class="add-btn" id="add-stat">+ Add Stat</button></div>
+      <div id="stats-editor"></div>
     </div>
 
     <!-- SKILLS -->
@@ -245,6 +241,10 @@
       </div>
       <div class="field-group"><label class="field-label">LinkedIn URL</label><input type="url" class="field" id="ct-linkedin"></div>
       <div class="field-group"><label class="field-label">GitHub URL</label><input type="url" class="field" id="ct-github"></div>
+      <hr class="section-divider">
+      <div class="list-header"><span class="list-title">Additional Links</span><button class="add-btn" id="add-link">+ Add Link</button></div>
+      <span class="field-hint" style="display:block;margin-bottom:10px">Add any extra links — Twitter/X, Discord, portfolio site, etc.</span>
+      <div id="links-editor"></div>
     </div>
 
     <!-- NEW SECTIONS: add tab-pane blocks here, id="tab-{name}" — see "+ Section" button above for the pattern -->
@@ -417,7 +417,7 @@ const DEFAULTS = {
   theme: { preset: '' },
   contact: {
     blurb:"Actively seeking cybersecurity opportunities — security roles, cloud infrastructure, or technical operations. Let's connect and talk about how I can contribute to your team.",
-    email:'swe.mahmoud.sultan@gmail.com',linkedin:'https://www.linkedin.com/in/mattheustein',phone:'+20 114 408 6778',github:''
+    email:'swe.mahmoud.sultan@gmail.com',linkedin:'https://www.linkedin.com/in/mattheustein',phone:'+20 114 408 6778',github:'',links:[]
   }
 };
 
@@ -446,7 +446,7 @@ function populateForms(d) {
   document.getElementById('hero-roles').value = (d.hero.roles || []).join('\n');
   document.getElementById('hero-bio').value = d.hero.bio || '';
   document.getElementById('hero-status').value = d.hero.status || '';
-  (d.about.para || []).forEach((p, i) => { const el = document.getElementById('ab-p'+(i+1)); if(el) el.value = p; });
+  renderParaEditor(d.about.para || DEFAULTS.about.para);
   renderStatsEditor(d.about.stats || DEFAULTS.about.stats);
   renderSkillList('sk-security', d.skills.security || []);
   renderSkillList('sk-technical', d.skills.technical || []);
@@ -463,16 +463,44 @@ function populateForms(d) {
   document.getElementById('ct-phone').value = c.phone || '';
   document.getElementById('ct-linkedin').value = c.linkedin || '';
   document.getElementById('ct-github').value = c.github || '';
+  renderLinksEditor(c.links || []);
 }
+
+// ── ABOUT PARAGRAPHS ──
+function renderParaEditor(paras) { const el=document.getElementById('para-editor'); el.innerHTML=''; paras.forEach((p,i)=>el.appendChild(mkParaItem(p,i))); }
+function mkParaItem(p, i) {
+  const div=document.createElement('div'); div.className='list-item';
+  div.innerHTML=`<button class="item-remove">Remove</button><div class="field-group"><label class="field-label">Paragraph ${i+1}</label><textarea class="field para-txt" rows="4">${p||''}</textarea></div>`;
+  div.querySelector('.item-remove').onclick=()=>{div.remove();reindexParas()};
+  return div;
+}
+function reindexParas(){document.querySelectorAll('#para-editor .field-label').forEach((l,i)=>l.textContent='Paragraph '+(i+1))}
+function getParaList(){return[...document.querySelectorAll('#para-editor .para-txt')].map(t=>t.value.trim()).filter(Boolean)}
+document.getElementById('add-para').addEventListener('click',()=>{
+  const el=document.getElementById('para-editor');
+  el.appendChild(mkParaItem('',el.children.length));
+});
 
 // ── STATS ──
 function renderStatsEditor(stats) {
-  document.getElementById('stats-editor').innerHTML = stats.map((s, i) => `
-    <div>
-      <div class="field-group"><label class="field-label">Stat ${i+1} Number</label><input type="text" class="field stat-num" data-i="${i}" value="${s.num}"></div>
-      <div class="field-group"><label class="field-label">Stat ${i+1} Label</label><input type="text" class="field stat-lbl" data-i="${i}" value="${s.label}"></div>
-    </div>`).join('');
+  const el=document.getElementById('stats-editor'); el.innerHTML='';
+  stats.forEach((s,i)=>el.appendChild(mkStatItem(s,i)));
 }
+function mkStatItem(s, i) {
+  const div=document.createElement('div'); div.className='list-item';
+  div.innerHTML=`<button class="item-remove">Remove</button>
+    <div class="row2">
+      <div class="field-group"><label class="field-label">Number / Value</label><input type="text" class="field stat-num" value="${s.num||''}" placeholder="3+"></div>
+      <div class="field-group"><label class="field-label">Label</label><input type="text" class="field stat-lbl" value="${s.label||''}" placeholder="Years Experience"></div>
+    </div>`;
+  div.querySelector('.item-remove').onclick=()=>div.remove();
+  return div;
+}
+function getStatsList(){return[...document.querySelectorAll('#stats-editor .list-item')].map(item=>({num:item.querySelector('.stat-num').value.trim(),label:item.querySelector('.stat-lbl').value.trim()})).filter(s=>s.num||s.label)}
+document.getElementById('add-stat').addEventListener('click',()=>{
+  const el=document.getElementById('stats-editor');
+  el.appendChild(mkStatItem({num:'',label:''},el.children.length));
+});
 
 // ── SKILL LIST ──
 function renderSkillList(id, items) {
@@ -498,6 +526,24 @@ document.querySelectorAll('.add-btn[data-list]').forEach(btn => {
     const el = document.getElementById(btn.dataset.list+'-list');
     el.appendChild(mkSkillRow(btn.dataset.list, {name:'',pct:0}, el.querySelectorAll('.skill-row').length));
   });
+});
+
+// ── EXTRA CONTACT LINKS ──
+function renderLinksEditor(links){const el=document.getElementById('links-editor');el.innerHTML='';links.forEach((l,i)=>el.appendChild(mkLinkItem(l,i)))}
+function mkLinkItem(l,i){
+  const div=document.createElement('div');div.className='list-item';
+  div.innerHTML=`<button class="item-remove">Remove</button>
+    <div class="row2">
+      <div class="field-group"><label class="field-label">Label</label><input type="text" class="field link-label" value="${l.label||''}" placeholder="Twitter / X"></div>
+      <div class="field-group"><label class="field-label">URL</label><input type="url" class="field link-url" value="${l.url||''}" placeholder="https://x.com/handle"></div>
+    </div>`;
+  div.querySelector('.item-remove').onclick=()=>div.remove();
+  return div;
+}
+function getLinksList(){return[...document.querySelectorAll('#links-editor .list-item')].map(item=>({label:item.querySelector('.link-label').value.trim(),url:item.querySelector('.link-url').value.trim()})).filter(l=>l.label&&l.url)}
+document.getElementById('add-link').addEventListener('click',()=>{
+  const el=document.getElementById('links-editor');
+  el.appendChild(mkLinkItem({label:'',url:''},el.children.length));
 });
 
 // ── EXPERIENCE ──
@@ -573,16 +619,13 @@ function getEduList() {
 
 // ── SAVE ──
 function collectData() {
-  const stats = [...document.querySelectorAll('.stat-num')].map((n,i) => ({
-    num:n.value.trim(), label:document.querySelectorAll('.stat-lbl')[i]?.value.trim()||''
-  }));
   return {
     hero:{ pre:document.getElementById('hero-pre').value.trim(), name:document.getElementById('hero-name').value.trim(), roles:document.getElementById('hero-roles').value.split('\n').map(r=>r.trim()).filter(Boolean), bio:document.getElementById('hero-bio').value.trim(), status:document.getElementById('hero-status').value.trim() },
-    about:{ para:[document.getElementById('ab-p1').value.trim(),document.getElementById('ab-p2').value.trim(),document.getElementById('ab-p3').value.trim()].filter(Boolean), stats },
+    about:{ para:getParaList(), stats:getStatsList() },
     skills:{ security:getSkillList('sk-security'), technical:getSkillList('sk-technical'), platforms:document.getElementById('sk-platforms').value.split(',').map(t=>t.trim()).filter(Boolean), soft:document.getElementById('sk-soft').value.split(',').map(t=>t.trim()).filter(Boolean) },
     theme:{ preset: activeThemePreset },
     experience:getExpList(), certs:getCertList(), education:getEduList(),
-    contact:{ blurb:document.getElementById('ct-blurb').value.trim(), email:document.getElementById('ct-email').value.trim(), phone:document.getElementById('ct-phone').value.trim(), linkedin:document.getElementById('ct-linkedin').value.trim(), github:document.getElementById('ct-github').value.trim() }
+    contact:{ blurb:document.getElementById('ct-blurb').value.trim(), email:document.getElementById('ct-email').value.trim(), phone:document.getElementById('ct-phone').value.trim(), linkedin:document.getElementById('ct-linkedin').value.trim(), github:document.getElementById('ct-github').value.trim(), links:getLinksList() }
   };
 }
 

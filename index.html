@@ -197,13 +197,15 @@
     <div class="about-grid rev">
       <div class="av"><img src="uploads/profile-pic.png" alt="Mahmoud Sultan"></div>
       <div class="at">
-        <p id="ab-p1">I'm <strong>Mahmoud Sultan</strong> — online alias <strong>Mattheustein</strong> — a tech professional based in New Cairo, Egypt. Currently serving as Business Support Specialist at <strong>Vodafone Business UK</strong> while transitioning deep into cybersecurity.</p>
-        <p id="ab-p2">My background spans technical support, cloud infrastructure, and business operations — giving me a practical, risk-aware perspective on security. I hold Google Cloud and network security certifications, and I'm enrolled in Egypt's Digital Egypt Pioneers Initiative (DEPI) software testing program.</p>
-        <p id="ab-p3">I communicate in <strong>Arabic</strong> (native), <strong>English</strong> (professional), and <strong>Spanish</strong> (elementary) — effective across diverse global teams.</p>
-        <div class="srow">
-          <div class="st2"><span class="sn" id="st-n1">3+</span><span class="sl2" id="st-l1">Yrs at Vodafone</span></div>
-          <div class="st2"><span class="sn" id="st-n2">5</span><span class="sl2" id="st-l2">Certifications</span></div>
-          <div class="st2"><span class="sn" id="st-n3">3</span><span class="sl2" id="st-l3">Languages</span></div>
+        <div id="ab-paras">
+          <p>I'm <strong>Mahmoud Sultan</strong> — online alias <strong>Mattheustein</strong> — a tech professional based in New Cairo, Egypt. Currently serving as Business Support Specialist at <strong>Vodafone Business UK</strong> while transitioning deep into cybersecurity.</p>
+          <p>My background spans technical support, cloud infrastructure, and business operations — giving me a practical, risk-aware perspective on security. I hold Google Cloud and network security certifications, and I'm enrolled in Egypt's Digital Egypt Pioneers Initiative (DEPI) software testing program.</p>
+          <p>I communicate in <strong>Arabic</strong> (native), <strong>English</strong> (professional), and <strong>Spanish</strong> (elementary) — effective across diverse global teams.</p>
+        </div>
+        <div class="srow" id="ab-stats">
+          <div class="st2"><span class="sn">3+</span><span class="sl2">Yrs at Vodafone</span></div>
+          <div class="st2"><span class="sn">5</span><span class="sl2">Certifications</span></div>
+          <div class="st2"><span class="sn">3</span><span class="sl2">Languages</span></div>
         </div>
       </div>
     </div>
@@ -303,6 +305,7 @@
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path></svg>
           <span>GitHub — add your handle</span>
         </a>
+        <div id="ct-extra-links"></div>
       </div>
     </div>
   </div>
@@ -395,11 +398,8 @@ async function loadPortfolioData(){
     }
     if(d.about){
       const a=d.about;
-      if(a.para)a.para.forEach((p,i)=>{const el=document.getElementById('ab-p'+(i+1));if(el)el.innerHTML=p});
-      if(a.stats)a.stats.forEach((s,i)=>{
-        const n=document.getElementById('st-n'+(i+1)),l=document.getElementById('st-l'+(i+1));
-        if(n)n.textContent=s.num;if(l)l.textContent=s.label;
-      });
+      if(a.para&&a.para.length){const c=document.getElementById('ab-paras');if(c)c.innerHTML=a.para.map(p=>`<p>${p}</p>`).join('')}
+      if(a.stats&&a.stats.length){const c=document.getElementById('ab-stats');if(c)c.innerHTML=a.stats.map(s=>`<div class="st2"><span class="sn">${s.num}</span><span class="sl2">${s.label}</span></div>`).join('')}
     }
     if(d.skills){
       const sk=d.skills;
@@ -421,6 +421,7 @@ async function loadPortfolioData(){
       if(c.linkedin){const el=document.getElementById('ct-linkedin');if(el){el.href=c.linkedin;const sp=el.querySelector('span');if(sp)sp.textContent=c.linkedin.replace('https://','')}}
       if(c.phone){const el=document.getElementById('ct-phone');if(el){el.href='tel:'+c.phone.replace(/[\s-]/g,'');const sp=el.querySelector('span');if(sp)sp.textContent=c.phone}}
       if(c.github&&c.github.length>0){const el=document.getElementById('ct-github');if(el){el.href=c.github;el.style.opacity='1';el.style.cursor='pointer';const sp=el.querySelector('span');if(sp)sp.textContent=c.github.replace('https://','')}}
+      if(c.links&&c.links.length){const el=document.getElementById('ct-extra-links');if(el)el.innerHTML=c.links.map(l=>`<a href="${l.url}" target="_blank" rel="noopener" class="soc"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg><span>${l.label}</span></a>`).join('')}
     }
     if(d.theme&&d.theme.preset!==undefined)document.body.className=d.theme.preset||'';
   }catch(e){console.warn('Portfolio data load:',e)}
